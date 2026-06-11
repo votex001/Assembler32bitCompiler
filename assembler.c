@@ -15,20 +15,20 @@ int main(int argc, char *files[]){
 }
 
 
-void compileFile(char *file){
+void compileFile(char *fileName){
 
-    FILE *file_addres;
+    FILE *file_address;
     
-    if(!isCorrectFileName(file)){
-        printf("Can't open file %s - incorrect format",file);
+    if(!isCorrectFileName(fileName)){
+        printf("Error: can't open file %s - incorrect format.Skipped.\n",fileName);
         return;
     }    
     
-    file_addres = fopen(file,"r");
+    file_address = fopen(fileName,"r");
 
-    if(file_addres == NULL){
-
-
+    if(file_address == NULL){
+        printf("Error: file %s is inaccessible for reading.Skipped.\n",fileName);
+        return;
     }
 
     
