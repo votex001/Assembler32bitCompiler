@@ -30,6 +30,7 @@ void compileFile(char *fileName){
         printf("Error: file %s is inaccessible for reading.Skipped.\n",fileName);
         return;
     }
+    /*TODO: add preprocess here*/
 
     
     

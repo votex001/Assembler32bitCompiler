@@ -7,8 +7,8 @@
 
 
 typedef enum booleans {
-    false = 0,
-    true = 1
+    FALSE = 0,
+    TRUE = 1
 } bool;
 
 #define MAX_LINE_LENGTH 80
@@ -20,6 +20,8 @@ typedef struct cur_line
 
     /*line string*/
     char *code;
+    
+    char *fileName;
     
 } cur_line;
 
