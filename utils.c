@@ -1,8 +1,11 @@
-#include "global.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
+
+#include "global.h"
 #include "utils.h"
+#include "code.h"
 
 
 
@@ -41,7 +44,7 @@ void skipSpaces(char *str, int *i){
     (*i)++;
 }
 
-bool firstWordIsLabel(cur_line line,char *firstWord){
+bool firstWordIsLabel(const cur_line line,char *firstWord){
     int i,j;
     j = i = 0;
     skipSpaces(line.code,&i);
@@ -60,3 +63,38 @@ bool firstWordIsLabel(cur_line line,char *firstWord){
 
 
 }
+
+
+bool isValidLabel(const char *label){
+
+    
+    return label[0] && strlen(label) <= 31 && isalpha(label[0]) && isAlphanumeric(label+1) && !isReservedWord(label);
+
+}
+
+bool isAlphanumeric(const char *str){
+    int i;
+
+    for(i = 0; str[i];i++){
+        if(!isalpha(str[i]) && !isdigit(str[i]))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+bool isReservedWord(const char *word){
+    funct func;
+    opcode op;
+    directive dir;
+    int size;
+
+    getFuncOp(word,&func,&op);
+    getDirectiveByName(word,&dir,&size);
+    /*check if derective or instruction command or register*/
+    if(op != NONE_OP || dir != NONE_DIR || getRegisterNum(word) != -1)
+        return TRUE;
+
+    return FALSE;
+}   
+
