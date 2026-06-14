@@ -1,7 +1,7 @@
 
 FLAGS = -ansi -Wall -pedantic
 OTHER = global.h
-OBJECTS = assembler.o utils.o preprocess.o
+OBJECTS = assembler.o utils.o preprocess.o tables.o file_utils.o code.o
 
 
 assembler: ${OBJECTS} ${OTHER}
@@ -18,3 +18,6 @@ tables.o: tables.c tables.h ${OTHER}
 
 file_utils.o: file_utils.c file_utils.h ${OTHER}
 	gcc -c file_utils.c ${FLAGS} -o $@
+
+code.o: code.c code.h ${OTHER}
+	gcc -c code.c ${FLAGS} -o $@
