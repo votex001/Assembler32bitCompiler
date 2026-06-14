@@ -3,26 +3,27 @@
 #include "global.h"
 #include "utils.h"
 #include "file_utils.h"
+#include "preprocess.h"
 
 
 
 
 
 
-bool expandMacros(cur_line line);
+
 
 
 /*if preproces is success we going to make .am and start process 1 and 2 else we skip file*/
-bool preprocess_file(FILE *file,char *fileName){
+bool preprocessFile(FILE *file,char *fileName){
     bool is_success = TRUE;
-    FILE *amFile
+    FILE *amFile;
     char temp_str[MAX_LINE_LENGTH + 2];
     char c;
     cur_line line;
     line.code = temp_str;
     line.fileName = cutStr(fileName,".as");
-    amFile = createFile(line.fileName,".am");
-
+    amFile = createFile(line.fileName,".am");/*TODO: change place of close and use it*/
+    fclose(amFile);
     if(fileName == NULL){
         printf("%s.as: error: failed to create output file '%s.am'\n",line.fileName,line.fileName);
         return FALSE;
@@ -62,8 +63,8 @@ bool expandMacros(cur_line line){
     /*TODO: add every legal line to amFile if get false delete amFIle*/
     if(firstWordIsLabel(line,firstWord)){
 
-        /*TODO: in utils create is_legal_label*/
-        if(!is_legal_label(firstWord)){
+        
+        if(!isValidLabel(firstWord)){
 
             printf("%s.as:%ld: error: illegal label - "
                 "label name must start with an alphabetic character "
@@ -72,13 +73,14 @@ bool expandMacros(cur_line line){
                 line.num);
 
             return FALSE;
-        /*TODO: in tables create macroExists*/
-        }else if(macroExists(firstWord)){
+        
+        }/*TODO: in tables create macroExists*/
+        /*else if(macroExists(firstWord)){
 
             printf("%s.as:%ld: error: label '%s' conflicts with an existing macro name",line.fileName,line.num,firstWord);
 
             return FALSE;
-        }
+        }*/
     }
     /*TODO: if it macro dont add to file and save it in tables*/
     if(strcmp(firstWord,"mcro")){
