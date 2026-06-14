@@ -2,9 +2,17 @@
     "C_Cpp.errorSquiggles": "disabled",
     "makefile.configureOnOpen": false,
     "cSpell.words": [
+        "addi",
+        "andi",
         "asciz",
         "mcro",
         "mcroend",
+        "mvhi",
+        "mvlo",
+        "nori",
+        "preproces",
+        "strcm",
+        "subi",
         "vall"
     ]
 }
