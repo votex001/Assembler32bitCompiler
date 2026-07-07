@@ -4,7 +4,7 @@
 #include "global.h"
 
 
-bool expandMacros(cur_line line);
+void expandMacros(cur_line line,bool *is_success,bool *if_in_macro,char *macro_name);
 bool preprocessFile(FILE *file,char *fileName);
 
 #endif
