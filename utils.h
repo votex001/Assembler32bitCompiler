@@ -6,7 +6,7 @@
 
 bool isCorrectFileName(char *fileName); 
 void skipSpaces(char *str, int *i);
-bool firstWordIsLabel(const cur_line line,char *firstWord);
+bool isFirstWordLabel(const cur_line line,char *nextWord);
 char *cutStr(const char *str1,const char *str2);
 bool isValidLabel(const char *label);
 bool isAlphanumeric(const char *str);

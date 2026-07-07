@@ -44,22 +44,18 @@ void skipSpaces(char *str, int *i){
     (*i)++;
 }
 
-bool firstWordIsLabel(const cur_line line,char *firstWord){
+bool isFirstWordLabel(const cur_line line,char *nextWord){
     int i,j;
     j = i = 0;
     skipSpaces(line.code,&i);
 
-    for(;line.code[i] && line.code[i] != EOF && line.code[i] != ':' && i <=MAX_LINE_LENGTH;j++,i++){
-        firstWord[j] = line.code[i];
+    for(;i <=MAX_LINE_LENGTH && line.code[i]&& line.code[i] != ':' && line.code[i] != ' ';j++,i++){
+        nextWord[j] = line.code[i];
     }
 
-    firstWord[j] = '\0';
-
-    if(line.code[i] == ':'){
-        return TRUE;
-    }
-    return FALSE;
+    nextWord[j] = '\0';
     
+    return line.code[i] == ':';
 
 
 }
