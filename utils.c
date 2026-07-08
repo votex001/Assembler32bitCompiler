@@ -8,7 +8,26 @@
 #include "code.h"
 
 
+void *mallocWithCheck(long size){
+    void *ptr = malloc(size);
+    if(ptr == NULL){
+        printf("Error: fatal memory allocation failed.");
+        exit(1);
+    }
+    return ptr;
+}
 
+void *reallocWithCheck(void *ptr,long *size){
+
+    void *new_ptr = realloc(ptr, size);
+
+    if(new_ptr == NULL){
+        printf("Error: fatal memory allocation failed.");
+        exit(1);
+    }
+
+    return ptr;
+}
 
 /*cuts from str1 str2*/
 char *cutStr(const char *str1,const char *str2){
@@ -44,18 +63,18 @@ void skipSpaces(char *str, int *i){
     (*i)++;
 }
 
-bool isFirstWordLabel(const cur_line line,char *nextWord){
-    int i,j;
-    j = i = 0;
-    skipSpaces(line.code,&i);
+bool isFirstWordLabel(const cur_line line,char *nextWord,int *i){
+    int j;
+    j = 0;
+    skipSpaces(line.code,i);
 
-    for(;i <=MAX_LINE_LENGTH && line.code[i]&& line.code[i] != ':' && line.code[i] != ' ';j++,i++){
-        nextWord[j] = line.code[i];
+    for(;*i <=MAX_LINE_LENGTH && line.code[*i]&& line.code[*i] != ':' && line.code[*i] != ' ';j++,(*i)++){
+        nextWord[j] = line.code[*i];
     }
 
     nextWord[j] = '\0';
     
-    return line.code[i] == ':';
+    return line.code[*i] == ':';
 
 
 }
