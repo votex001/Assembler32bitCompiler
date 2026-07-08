@@ -9,8 +9,8 @@
 
 
 
-
-
+void getSecondWord();
+void getRestLine();
 
 
 /*if preproces is success we going to make .am and start process 1 and 2 else we skip file*/
@@ -63,47 +63,73 @@ bool preprocessFile(FILE *file,char *fileName){
 
 
 void expandMacros(cur_line line,bool *is_success,bool *is_in_macro,char *macro_name){
-    int i = 0; /*pointer for string*/
-    char firstWord[MAX_LINE_LENGTH+1];
+    int i,j; /*pointer for strings*/
+    i = j = 0;/*init*/
+    char savedWord[MAX_LINE_LENGTH+2];
+    char restOfLine[MAX_LINE_LENGTH+2];
 
 
 
     skipSpaces(line.code,&i);
 
-    if(!line.code[i] || line.code[i] == '\n' || line.code[i] == EOF || line.code[i] == ';')
-        return TRUE;/*comment or empty string - skip*/
+    if(!line.code[i] || line.code[i] == '\n' || line.code[i] == ';')
+        return;/*comment or empty string - skip*/
 
-    if(isFirstWordLabel(line,&firstWord)){
-        /*check if macro_exists*/
+    if(isFirstWordLabel(line,savedWord,&i)){
+        /*TODO:check if macro_exists*/
     }
 
     if(*is_in_macro){
-        if(strcmp(&firstWord,"mcroend")){
+        if(strcmp(&savedWord,"mcroend")==0){
             *is_in_macro = FALSE; 
             
         }else{
-
             /*appendMacroLine in macro table by *macro_name*/
+            appendMacroLine(savedWord,line.code);
         }
         
         return;
     }
 
 
-    if(strcmp(firstWord,"mcro")){
+    if(strcmp(savedWord,"mcro") == 0){
         *is_in_macro = TRUE;
-        /*save second word in macro_name*/
+        
+        getSecondWord(line,savedWord);
+        getRestLine(line,restOfLine,&i);
+
+
+        
+        /*TODO:save second word in macro_name and end of string*/
         return;
     }
 
-
-
-
-
-
-
-
+    /*TODO:check if first ord is macro*/
     
 }
 
 
+void getSecondWord(cur_line line,char *secondWord,int *i){
+    int j;
+    j = 0;
+    skipSpaces(line.code,i);
+    /*skip first word*/
+    while(line.code[*i] != ' ' && *i <= MAX_LINE_LENGTH){(*i)++;}
+    skipSpaces(line.code,i);
+    /*copy second word*/
+    for(;*i <=MAX_LINE_LENGTH && line.code[*i]&& line.code[*i] != ':' && line.code[*i] != ' ';j++,(*i)++){
+        secondWord[j] = line.code[*i];
+    }
+
+    secondWord[j] = '\0';
+};
+void getRestLine(cur_line line,char *restOfLine,int *i){
+    int j;
+    /*copy rest of line*/
+    for(j = 0;line.code[*i] != '\n' && *i <= MAX_LINE_LENGTH;j++,(*i)++){
+        restOfLine[j]=line.code[*i];
+    }
+
+    restOfLine[j]='\0';
+
+};
