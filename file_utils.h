@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 FILE *createFile(const char *sourceName, const char *extension);
-void deleteFile(const char *FileName);
+void deleteFile(const char *name, const char *ext);
 
 
 
