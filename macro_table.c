@@ -58,3 +58,18 @@ void appendMacroLine(char *name,char *content){
         current->next = macro_ptr;
     }
 }
+
+
+
+bool isMacroExist(char *name){
+    macro_table cur = head;
+
+    while (cur != NULL)
+    {
+        if(strcmp(cur->name,name) == 0){
+            return TRUE;
+        }
+        cur = cur->next;
+    }
+    return FALSE;
+}

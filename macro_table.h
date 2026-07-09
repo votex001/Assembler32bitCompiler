@@ -13,5 +13,6 @@ typedef struct macro
 typedef macro *macro_table;
 
 void appendMacroLine(char *name,char *content);
+bool isMacroExist(char *name);
 
 #endif
