@@ -3,14 +3,15 @@
 #include "global.h"
 #include "utils.h"
 #include "file_utils.h"
+#include "macro_table.h"
 #include "preprocess.h"
 
 
 
 
 
-void getSecondWord();
-void getRestLine();
+void getSecondWord(cur_line line,char *secondWord,int *i);
+void getRestLine(cur_line line,char *restOfLine,int *i);
 
 
 /*if preproces is success we going to make .am and start process 1 and 2 else we skip file*/
@@ -38,7 +39,7 @@ bool preprocessFile(FILE *file,char *fileName){
         /*In this stage if we have some problem with writing am we just deleting it and move on*/
         if(!is_success){
             fclose(amFile);
-            deleteFile(amFile);
+            deleteFile(line.fileName,".am");
             return FALSE;
         }
 
@@ -51,7 +52,7 @@ bool preprocessFile(FILE *file,char *fileName){
             while((c = fgetc(file))!='\n' && c!= EOF);
             
         }else {
-            expandMacros(line,&is_success,&is_in_macro,macro_name);
+            expandMacros(line,&is_success,&is_in_macro,macro_name,amFile);
         }
         
 
@@ -62,7 +63,7 @@ bool preprocessFile(FILE *file,char *fileName){
 }
 
 
-void expandMacros(cur_line line,bool *is_success,bool *is_in_macro,char *macro_name){
+void expandMacros(cur_line line,bool *is_success,bool *is_in_macro,char *macro_name,FILE *amFile){
     int i,j; /*pointer for strings*/
     i = j = 0;/*init*/
     char savedWord[MAX_LINE_LENGTH+2];
@@ -75,10 +76,33 @@ void expandMacros(cur_line line,bool *is_success,bool *is_in_macro,char *macro_n
     if(!line.code[i] || line.code[i] == '\n' || line.code[i] == ';')
         return;/*comment or empty string - skip*/
 
+    /*if label has same name with macro*/
     if(isFirstWordLabel(line,savedWord,&i)){
-        /*TODO:check if macro_exists*/
+        if(isMacroExist(savedWord)){
+            printf("%s.as:%ld: error: label '%s' conflicts with macro name",fileName,line.num,savedWord);
+            is_success = FALSE;
+            return;
+        }
+    }else if(isMacroExist(savedWord)){
+        /*TODO:check if first word is macro name thats exist*/
+
     }
 
+    
+
+    /*searching for mcro start line*/
+    if(strcmp(savedWord,"mcro") == 0){
+        *is_in_macro = TRUE;
+        
+        getSecondWord(line,savedWord);
+        getRestLine(line,restOfLine,&i);
+
+        appendMacroLine(savedWord,restOfLine);
+
+        return;
+    }
+
+    /*copying macro line or exit macro cicle*/
     if(*is_in_macro){
         if(strcmp(&savedWord,"mcroend")==0){
             *is_in_macro = FALSE; 
@@ -87,24 +111,11 @@ void expandMacros(cur_line line,bool *is_success,bool *is_in_macro,char *macro_n
             /*appendMacroLine in macro table by *macro_name*/
             appendMacroLine(savedWord,line.code);
         }
-        
         return;
     }
 
-
-    if(strcmp(savedWord,"mcro") == 0){
-        *is_in_macro = TRUE;
-        
-        getSecondWord(line,savedWord);
-        getRestLine(line,restOfLine,&i);
-
-
-        
-        /*TODO:save second word in macro_name and end of string*/
-        return;
-    }
-
-    /*TODO:check if first ord is macro*/
+    /*else just save line in .am*/
+    
     
 }
 
