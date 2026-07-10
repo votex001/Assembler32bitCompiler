@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-FILE *createFile(const char *sourceName, const char *extension);
+FILE *writefile(const char *fileName, const char *ext);
 void deleteFile(const char *name, const char *ext);
 
 

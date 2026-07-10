@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "global.h"
 #include "utils.h"
+#include "preprocess.h"
 
 void compileFile(char *file);
 
@@ -30,9 +31,11 @@ void compileFile(char *fileName){
         printf("Error: file %s is inaccessible for reading.Skipped.\n",fileName);
         return;
     }
-    /*TODO: add preprocess here*/
+    if(preprocessFile(file_address,fileName)){
+        printf("succes file name: %s\n",fileName);
+    };
 
     
-    
+    fclose(file_address);
 
 }

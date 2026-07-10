@@ -1,5 +1,7 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+
 #include "global.h"
 #include "macro_table.h"
 #include "utils.h"
@@ -8,62 +10,72 @@
 
 
 /*global table*/
-macro_table macro_head;
+macroTable head;
 
 
 
 
 
 
+macro *createMacro(const char *name, const char *content)
+{
+    macro *newMacro = mallocWithCheck(sizeof(*newMacro));
+    newMacro->name = mallocWithCheck(strlen(name) + 1);
+    newMacro->content = mallocWithCheck(strlen(content) + 1);
+    strcpy(newMacro->name, name);
+    strcpy(newMacro->content, content);
+    newMacro->next = NULL;
+
+    return newMacro;
+}
 
 
+void appendMacroLine(const char *name,const char *content){
 
-void appendMacroLine(char *name,char *content){
-
-    macro *macro_ptr,*current;
-    char *temp_content;
-
-    
-
+    macro *current;
     
     /*we dont have macros until now*/
-    if(macro_head == NULL){
-        macro_ptr = (macro *) mallocWithCheck(sizeof(*macro));
-        macro_ptr->name = (char *) mallocWithCheck(strlen(name)+1);
-        macro_ptr->content = (char *) mallocWithCheck(strlen(content)+1);
-        macro_ptr->next = NULL;
-        strcpy(macro_ptr->name,name);
-        strcpy(macro_ptr->content,content);
-        macro_head = macro_ptr;
+    if(head == NULL){
+       
+        head = createMacro(name,content);
         return;
     }
 
-    current = macro_head;
+    current = head;
+
     /*finding our macro*/
-    while(current->next != NULL && strcmp(current->name, name) != 0)current=current->next;
+    while(current->next != NULL && strcmp(current->name, name) != 0)
+        current = current->next;
 
     /*if we find name adding content else we adding new macro in the end of arr*/
     if(strcmp(current->name,name)==0){
+        
         current->content = reallocWithCheck(current->content,
                                             strlen(current->content) + 
                                             strlen(content) + 1);
         strcat(current->content,content);                                    
     }else{
-        macro_ptr = (macro *) mallocWithCheck(sizeof(*macro));
-        macro_ptr->name = (char *) mallocWithCheck(strlen(name)+1);
-        macro_ptr->content = (char *) mallocWithCheck(strlen(content)+1);
-        macro_ptr->next = NULL;
-        strcpy(macro_ptr->name,name);
-        strcpy(macro_ptr->content,content);
-        current->next = macro_ptr;
+        current->next = createMacro(name,content);
     }
+}
+
+const char *getMacro(const char *name){
+    macroTable cur = head;
+
+    while(cur != NULL && strcmp(cur->name, name) != 0)
+        cur = cur->next;
+
+    if(cur == NULL){
+        return NULL;
+    }
+
+    return cur->content;
 }
 
 
 
-bool isMacroExist(char *name){
-    macro_table cur = head;
-
+bool isMacroExist(const char *name){
+    macroTable cur = head;
     while (cur != NULL)
     {
         if(strcmp(cur->name,name) == 0){
@@ -72,4 +84,20 @@ bool isMacroExist(char *name){
         cur = cur->next;
     }
     return FALSE;
+}
+
+
+void deleteMacroTable(){
+    macroTable prev = head;
+    macroTable cur;
+
+    while (prev != NULL)
+    {
+        cur = prev->next;
+        free(prev->content);
+        free(prev->name);
+        free(prev);
+        prev = cur;
+    }
+    head = NULL;
 }

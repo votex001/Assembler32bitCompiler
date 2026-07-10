@@ -12,6 +12,6 @@ bool isValidLabel(const char *label);
 bool isAlphanumeric(const char *str);
 bool isReservedWord(const char *word);
 void *mallocWithCheck(long size);
-void *reallocWithCheck(void *ptr,long *size);
+void *reallocWithCheck(void *ptr,long size);
 
 #endif

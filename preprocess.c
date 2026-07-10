@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "global.h"
 #include "utils.h"
@@ -18,16 +19,20 @@ void getRestLine(cur_line line,char *restOfLine,int *i);
 bool preprocessFile(FILE *file,char *fileName){
     bool is_success = TRUE;
     bool is_in_macro = FALSE;
-    char *macro_name[MAX_LINE_LENGTH];
+    char macro_name[MAX_LINE_LENGTH];
     char temp_str[MAX_LINE_LENGTH + 2];
-    char c;
+    int c;
     
-    /*creating am file and sending it to expand macrof func*/ 
+    /*creating am file and sending it to expand macros func*/ 
     FILE *amFile;
     cur_line line;
     line.code = temp_str;
     line.fileName = cutStr(fileName,".as");
-    amFile = createFile(line.fileName,".am");
+    if(line.fileName == NULL){
+        printf("error: cannot cut filename\n");
+        return FALSE;
+    }
+    amFile = writefile(line.fileName,".am");
   
     if(amFile == NULL){
         printf("%s.as: error: failed to create output file '%s.am'\n",line.fileName,line.fileName);
@@ -45,19 +50,20 @@ bool preprocessFile(FILE *file,char *fileName){
 
 
         /*checking if line is to long*/
-        if(strchr(temp_str,'\n')==NULL){
-            printf("%s.as:%ld: error: line is too long.Maximum line length is %d",fileName,line.num,MAX_LINE_LENGTH);
+        if(strchr(temp_str,'\n')==NULL && !feof(file)){
+            printf("%s.as:%ld: error: line is too long.Maximum line length is %d\n",line.fileName,line.num,MAX_LINE_LENGTH);
             is_success = FALSE;
             /*skip extra symbols*/
             while((c = fgetc(file))!='\n' && c!= EOF);
-            
         }else {
             expandMacros(line,&is_success,&is_in_macro,macro_name,amFile);
         }
         
 
     }
-
+    /*free all mallocs*/
+    deleteMacroTable();
+    free(line.fileName);
     fclose(amFile);
     return is_success;
 }
@@ -65,9 +71,10 @@ bool preprocessFile(FILE *file,char *fileName){
 
 void expandMacros(cur_line line,bool *is_success,bool *is_in_macro,char *macro_name,FILE *amFile){
     int i,j; /*pointer for strings*/
-    i = j = 0;/*init*/
     char savedWord[MAX_LINE_LENGTH+2];
     char restOfLine[MAX_LINE_LENGTH+2];
+    const char *macroContent;
+    i = j = 0;/*init*/
 
 
 
@@ -79,43 +86,44 @@ void expandMacros(cur_line line,bool *is_success,bool *is_in_macro,char *macro_n
     /*if label has same name with macro*/
     if(isFirstWordLabel(line,savedWord,&i)){
         if(isMacroExist(savedWord)){
-            printf("%s.as:%ld: error: label '%s' conflicts with macro name",fileName,line.num,savedWord);
-            is_success = FALSE;
+            printf("%s.as:%ld: error: label '%s' conflicts with macro name",line.fileName,line.num,savedWord);
+            *is_success = FALSE;
+            deleteMacroTable();
             return;
         }
     }else if(isMacroExist(savedWord)){
-        /*TODO:check if first word is macro name thats exist*/
-
+        macroContent = getMacro(savedWord);
+        fputs(macroContent,amFile);
+        return;
     }
-
-    
 
     /*searching for mcro start line*/
     if(strcmp(savedWord,"mcro") == 0){
         *is_in_macro = TRUE;
         
-        getSecondWord(line,savedWord);
+      
+        getSecondWord(line,savedWord,&i);
+        strcpy(macro_name, savedWord);
         getRestLine(line,restOfLine,&i);
 
-        appendMacroLine(savedWord,restOfLine);
+        appendMacroLine(macro_name,restOfLine);
 
         return;
     }
 
     /*copying macro line or exit macro cicle*/
     if(*is_in_macro){
-        if(strcmp(&savedWord,"mcroend")==0){
+        if(strcmp(savedWord,"mcroend")==0){
             *is_in_macro = FALSE; 
-            
         }else{
             /*appendMacroLine in macro table by *macro_name*/
-            appendMacroLine(savedWord,line.code);
+            appendMacroLine(macro_name,line.code);
         }
         return;
     }
 
     /*else just save line in .am*/
-    
+    fputs(line.code,amFile);
     
 }
 
@@ -123,24 +131,27 @@ void expandMacros(cur_line line,bool *is_success,bool *is_in_macro,char *macro_n
 void getSecondWord(cur_line line,char *secondWord,int *i){
     int j;
     j = 0;
-    skipSpaces(line.code,i);
-    /*skip first word*/
-    while(line.code[*i] != ' ' && *i <= MAX_LINE_LENGTH){(*i)++;}
+   
     skipSpaces(line.code,i);
     /*copy second word*/
-    for(;*i <=MAX_LINE_LENGTH && line.code[*i]&& line.code[*i] != ':' && line.code[*i] != ' ';j++,(*i)++){
-        secondWord[j] = line.code[*i];
+    while(line.code[*i] &&line.code[*i] != ' ' &&
+          line.code[*i] != '\t' && line.code[*i] != '\n')
+    {
+        secondWord[j++] = line.code[*i];
+        (*i)++;
     }
 
     secondWord[j] = '\0';
-};
+}
+
+
 void getRestLine(cur_line line,char *restOfLine,int *i){
     int j;
     /*copy rest of line*/
-    for(j = 0;line.code[*i] != '\n' && *i <= MAX_LINE_LENGTH;j++,(*i)++){
+    for(j = 0;*i <= MAX_LINE_LENGTH && line.code[*i] != '\n';j++,(*i)++){
         restOfLine[j]=line.code[*i];
     }
 
     restOfLine[j]='\0';
 
-};
+}

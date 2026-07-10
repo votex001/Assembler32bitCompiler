@@ -17,7 +17,7 @@ void *mallocWithCheck(long size){
     return ptr;
 }
 
-void *reallocWithCheck(void *ptr,long *size){
+void *reallocWithCheck(void *ptr,long size){
 
     void *new_ptr = realloc(ptr, size);
 
@@ -26,7 +26,7 @@ void *reallocWithCheck(void *ptr,long *size){
         exit(1);
     }
 
-    return ptr;
+    return new_ptr;
 }
 
 /*cuts from str1 str2*/
@@ -39,7 +39,7 @@ char *cutStr(const char *str1,const char *str2){
         return NULL;
     }
 
-    res = malloc(strLen1 - strLen2 + 1);
+    res = mallocWithCheck(strLen1 - strLen2 + 1);
     strncpy(res,str1,strLen1 - strLen2);
     res[strLen1 - strLen2] = '\0';
     return res;
@@ -68,7 +68,7 @@ bool isFirstWordLabel(const cur_line line,char *nextWord,int *i){
     j = 0;
     skipSpaces(line.code,i);
 
-    for(;*i <=MAX_LINE_LENGTH && line.code[*i]&& line.code[*i] != ':' && line.code[*i] != ' ';j++,(*i)++){
+    for(;*i <=MAX_LINE_LENGTH && line.code[*i]&& line.code[*i] != ':' && line.code[*i] != ' '&& line.code[*i] != '\n';j++,(*i)++){
         nextWord[j] = line.code[*i];
     }
 
