@@ -9,7 +9,7 @@
 FILE *writefile(const char *fileName, const char *ext){
     char *fileWithExt;
     FILE *file;
-    fileWithExt = mallocWithCheck((strlen(fileName) + strlen(ext)) + 2);
+    fileWithExt = mallocWithCheck((strlen(fileName) + strlen(ext)) + 1);
 
     if(fileWithExt == NULL){
         return NULL;
@@ -25,7 +25,7 @@ FILE *writefile(const char *fileName, const char *ext){
 FILE *readFile(const char *fileName, const char *ext){
     char *fileWithExt;
     FILE *file;
-    fileWithExt = mallocWithCheck((strlen(fileName) + strlen(ext)) + 2);
+    fileWithExt = mallocWithCheck((strlen(fileName) + strlen(ext)) + 1);
 
     if(fileWithExt == NULL){
         return NULL;
@@ -42,7 +42,7 @@ FILE *readFile(const char *fileName, const char *ext){
 void deleteFile(const char *name, const char *ext){
     char *fileWithExt;
 
-    fileWithExt = mallocWithCheck((strlen(name) + strlen(ext)) + 2);
+    fileWithExt = mallocWithCheck((strlen(name) + strlen(ext)) + 1);
 
     if (fileWithExt == NULL){
 
