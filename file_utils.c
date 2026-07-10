@@ -6,12 +6,13 @@
 #include "utils.h"
 
 /*get name and extension and creates file*/
-FILE *writefile(const char *fileName, const char *ext){
+FILE *writeFile(const char *fileName, const char *ext){
     char *fileWithExt;
     FILE *file;
     fileWithExt = mallocWithCheck((strlen(fileName) + strlen(ext)) + 1);
 
     if(fileWithExt == NULL){
+        printf("Can't create or rewrite to file %s.",fileWithExt);
         return NULL;
     }
 
@@ -28,6 +29,7 @@ FILE *readFile(const char *fileName, const char *ext){
     fileWithExt = mallocWithCheck((strlen(fileName) + strlen(ext)) + 1);
 
     if(fileWithExt == NULL){
+        printf("Can't read file %s.",fileWithExt);
         return NULL;
     }
 

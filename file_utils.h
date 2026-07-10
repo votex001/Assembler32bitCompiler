@@ -3,9 +3,9 @@
 
 #include <stdio.h>
 
-FILE *writefile(const char *fileName, const char *ext);
+FILE *writeFile(const char *fileName, const char *ext);
 void deleteFile(const char *name, const char *ext);
-
+FILE *readFile(const char *fileName, const char *ext);
 
 
 #endif

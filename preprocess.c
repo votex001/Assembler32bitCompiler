@@ -12,7 +12,6 @@
 
 
 void getSecondWord(cur_line line,char *secondWord,int *i);
-void getRestLine(cur_line line,char *restOfLine,int *i);
 
 
 /*if preproces is success we going to make .am and start process 1 and 2 else we skip file*/
@@ -32,7 +31,7 @@ bool preprocessFile(FILE *file,char *fileName){
         printf("error: cannot cut filename\n");
         return FALSE;
     }
-    amFile = writefile(line.fileName,".am");
+    amFile = writeFile(line.fileName,".am");
   
     if(amFile == NULL){
         printf("%s.as: error: failed to create output file '%s.am'\n",line.fileName,line.fileName);
@@ -135,7 +134,9 @@ void getSecondWord(cur_line line,char *secondWord,int *i){
     skipSpaces(line.code,i);
     /*copy second word*/
     while(line.code[*i] &&line.code[*i] != ' ' &&
-          line.code[*i] != '\t' && line.code[*i] != '\n')
+        line.code[*i] != '\t' && 
+        line.code[*i] != '\n' &&
+        line.code[*i] != '\r')
     {
         secondWord[j++] = line.code[*i];
         (*i)++;
@@ -145,13 +146,3 @@ void getSecondWord(cur_line line,char *secondWord,int *i){
 }
 
 
-void getRestLine(cur_line line,char *restOfLine,int *i){
-    int j;
-    /*copy rest of line*/
-    for(j = 0;*i <= MAX_LINE_LENGTH && line.code[*i] != '\n';j++,(*i)++){
-        restOfLine[j]=line.code[*i];
-    }
-
-    restOfLine[j]='\0';
-
-}

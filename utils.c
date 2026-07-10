@@ -59,7 +59,7 @@ bool isCorrectFileName(char *fileName){
 
 /*skips at line all spaces and tabs*/
 void skipSpaces(char *str, int *i){
-    while(str[*i] && (str[*i]=='\t' || str[*i] == ' '))
+    while(str[*i] && (str[*i]=='\t' || str[*i] == ' ' || str[*i]=='\r'))
     (*i)++;
 }
 
@@ -68,7 +68,11 @@ bool isFirstWordLabel(const cur_line line,char *nextWord,int *i){
     j = 0;
     skipSpaces(line.code,i);
 
-    for(;*i <=MAX_LINE_LENGTH && line.code[*i]&& line.code[*i] != ':' && line.code[*i] != ' '&& line.code[*i] != '\n';j++,(*i)++){
+    for(;*i <=MAX_LINE_LENGTH && line.code[*i]&& 
+        line.code[*i] != ':' && 
+        line.code[*i] != ' '&& 
+        line.code[*i] != '\n' && 
+        line.code[*i] != '\r';j++,(*i)++){
         nextWord[j] = line.code[*i];
     }
 
@@ -113,3 +117,18 @@ bool isReservedWord(const char *word){
     return FALSE;
 }   
 
+
+bool isEmptyStr(char *str,int i){
+    return (!str[i] || str[i] == '\n' || str[i] == ';' || str[i] == '\r');
+}
+
+void getRestLine(cur_line line,char *restOfLine,int *i){
+    int j;
+    /*copy rest of line*/
+    for(j = 0;*i <= MAX_LINE_LENGTH && line.code[*i] != '\n'&& line.code[*i] != '\r';j++,(*i)++){
+        restOfLine[j]=line.code[*i];
+    }
+
+    restOfLine[j]='\0';
+
+}

@@ -13,5 +13,7 @@ bool isAlphanumeric(const char *str);
 bool isReservedWord(const char *word);
 void *mallocWithCheck(long size);
 void *reallocWithCheck(void *ptr,long size);
+void getRestLine(cur_line line,char *restOfLine,int *i);
+bool isEmptyStr(char *str,int i);
 
 #endif

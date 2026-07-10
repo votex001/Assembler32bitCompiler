@@ -2,6 +2,7 @@
 #include "global.h"
 #include "utils.h"
 #include "preprocess.h"
+#include "process_files.h"
 
 void compileFile(char *file);
 
@@ -19,7 +20,8 @@ int main(int argc, char *files[]){
 void compileFile(char *fileName){
 
     FILE *file_address;
-    
+    char *nameWithOtherExt;
+
     if(!isCorrectFileName(fileName)){
         printf("Error: can't open file %s - incorrect format.Skipped.\n",fileName);
         return;
@@ -32,7 +34,8 @@ void compileFile(char *fileName){
         return;
     }
     if(preprocessFile(file_address,fileName)){
-        printf("succes file name: %s\n",fileName);
+       processFiles(fileName);
+    
     };
 
     
