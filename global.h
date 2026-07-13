@@ -5,13 +5,17 @@
 
 
 
-
+/*Boolean (t/f) definition */
 typedef enum bool {
     FALSE = 0,
     TRUE = 1
 } bool;
 
+/*single line maximum length*/
 #define MAX_LINE_LENGTH 80
+
+/* Initial IC value */
+#define IC_INIt_VAL 100
 
 typedef struct cur_line
 {
