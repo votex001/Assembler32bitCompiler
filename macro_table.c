@@ -32,7 +32,7 @@ macro *createMacro(const char *name, const char *content)
 
 void appendMacroLine(const char *name,const char *content){
 
-    macro *current;
+    macroTable current;
     
     /*we dont have macros until now*/
     if(head == NULL){
