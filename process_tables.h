@@ -2,34 +2,25 @@
 #define PROCCESS_TABLES_H
 
 
-typedef struct label
+typedef struct symbol
 {
-    long address;
+    unsigned int address;
     char *label;
-}label;
+    bool isData;
+    struct symbol next;
+}symbol;
 
-typedef label *labelTable;
+typedef symbol *symbolTable;
 
 
 typedef struct singleCodeLine {
-    unsigned int address;
-    unsigned int opcode;
-    unsigned int funct;
-    unsigned int rs;
-    unsigned int rt;
-    unsigned int rd;
-    unsigned int funct;
-    unsigned int label;
+    unsigned int machine_word;
+    char *label;
+    struct singleCodeLine next;
 } singleCodeLine;
 
 typedef singleCodeLine *codeImage;
 
-typedef struct singleDataLine{
-    long address;
-    char *code;
-}singleDataLine;
-
-typedef singleDataLine *dataImage;
 
 
 
