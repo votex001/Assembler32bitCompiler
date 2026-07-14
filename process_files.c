@@ -5,7 +5,7 @@
 #include "process_files.h"
 #include "global.h"
 #include "first_pass.h"
-
+#include "macro_table.h"
 
 
 
@@ -40,7 +40,7 @@ void processFiles(char *fullName){
     }
 
 
-
+    deleteMacroTable();
     free(line.fileName);
     fclose(amFile);
     fclose(obFile);

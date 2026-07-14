@@ -17,10 +17,9 @@ void getSecondWord(cur_line line,char *secondWord,int *i);
 /*if preproces is success we going to make .am and start process 1 and 2 else we skip file*/
 bool preprocessFile(FILE *file,char *fileName){
     bool is_success = TRUE;
-    bool is_in_macro = FALSE;
+    bool is_in_macro = FALSE,skip_current_macro = FALSE;
     char macro_name[MAX_LINE_LENGTH];
     char temp_str[MAX_LINE_LENGTH + 2];
-    int c;
     
     /*creating am file and sending it to expand macros func*/ 
     FILE *amFile;
@@ -40,35 +39,20 @@ bool preprocessFile(FILE *file,char *fileName){
     
     /*we going in file line by line*/
     for(line.num = 1;fgets(temp_str,MAX_LINE_LENGTH+2,file)!=NULL;line.num++){
-        /*In this stage if we have some problem with writing am we just deleting it and move on*/
-        if(!is_success){
-            fclose(amFile);
-            deleteFile(line.fileName,".am");
-            return FALSE;
-        }
-
-
-        /*checking if line is to long*/
-        if(strchr(temp_str,'\n')==NULL && !feof(file)){
-            printf("%s.as:%ld: error: line is too long.Maximum line length is %d\n",line.fileName,line.num,MAX_LINE_LENGTH);
-            is_success = FALSE;
-            /*skip extra symbols*/
-            while((c = fgetc(file))!='\n' && c!= EOF);
-        }else {
-            expandMacros(line,&is_success,&is_in_macro,macro_name,amFile);
-        }
-        
-
+        expandMacros(line,&is_success,&skip_current_macro,&is_in_macro,macro_name,amFile);
     }
-    /*free all mallocs*/
-    deleteMacroTable();
-    free(line.fileName);
     fclose(amFile);
-    return is_success;
+    if(!is_success){
+        deleteFile(line.fileName,".am");
+    }
+    free(line.fileName);
+     
+    
+    return TRUE;
 }
 
 
-void expandMacros(cur_line line,bool *is_success,bool *is_in_macro,char *macro_name,FILE *amFile){
+void expandMacros(cur_line line,bool *is_success,bool *skip_current_macro,bool *is_in_macro,char *macro_name,FILE *amFile){
     int i,j; /*pointer for strings*/
     char savedWord[MAX_LINE_LENGTH+2];
     char restOfLine[MAX_LINE_LENGTH+2];
@@ -82,17 +66,16 @@ void expandMacros(cur_line line,bool *is_success,bool *is_in_macro,char *macro_n
     if(!line.code[i] || line.code[i] == '\n' || line.code[i] == ';')
         return;/*comment or empty string - skip*/
 
-    /*if label has same name with macro*/
-    if(isFirstWordLabel(line,savedWord,&i)){
-        if(isMacroExist(savedWord)){
-            printf("%s.as:%ld: error: label '%s' conflicts with macro name",line.fileName,line.num,savedWord);
-            *is_success = FALSE;
-            deleteMacroTable();
-            return;
-        }
-    }else if(isMacroExist(savedWord)){
+    
+    if(!isFirstWordLabel(line,savedWord,&i) && isMacroExist(savedWord)){
         macroContent = getMacro(savedWord);
         fputs(macroContent,amFile);
+        return;
+    }
+    if(strstr(line.code, "mcro") != NULL && strcmp(savedWord,"mcro") == 1){
+        printf("%s.as:%ld: error: text before mcro declaration.\n",line.fileName,line.num);
+        *is_success = FALSE;
+        *skip_current_macro = TRUE;
         return;
     }
 
@@ -103,11 +86,33 @@ void expandMacros(cur_line line,bool *is_success,bool *is_in_macro,char *macro_n
       
         getSecondWord(line,savedWord,&i);
         strcpy(macro_name, savedWord);
-        getRestLine(line,restOfLine,&i);
+        skipSpaces(line.code,&i);
+        if(line.code[i] != '\n'){
+            printf("%s.as:%ld: error: text after mcro declaration.\n",line.fileName,line.num);
+            *is_success = FALSE;
+            *skip_current_macro = TRUE;
+            return;
+        }
+        if(!isReservedWord(macro_name) && getMacro(macro_name) == NULL){
 
-        appendMacroLine(macro_name,restOfLine);
+            
+            appendMacroLine(macro_name,restOfLine);
+        }else{
+            printf("%s.as:%ld: error: mcro %s declareted already.\n",line.fileName,line.num,macro_name);
+            *is_success = FALSE;
+            *skip_current_macro = TRUE;
+            return;
+        }
 
         return;
+    }
+    /*skippin macro with error*/
+    if(*is_in_macro && *skip_current_macro){
+        if(strcmp(savedWord,"mcroend")==0){
+            *is_in_macro = FALSE; 
+        }else{
+            return;
+        }
     }
 
     /*copying macro line or exit macro cicle*/
@@ -115,6 +120,7 @@ void expandMacros(cur_line line,bool *is_success,bool *is_in_macro,char *macro_n
         if(strcmp(savedWord,"mcroend")==0){
             *is_in_macro = FALSE; 
         }else{
+            
             /*appendMacroLine in macro table by *macro_name*/
             appendMacroLine(macro_name,line.code);
         }

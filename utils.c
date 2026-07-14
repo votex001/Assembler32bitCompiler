@@ -121,14 +121,3 @@ bool isReservedWord(const char *word){
 bool isEmptyStr(char *str,int i){
     return (!str[i] || str[i] == '\n' || str[i] == ';' || str[i] == '\r');
 }
-
-void getRestLine(cur_line line,char *restOfLine,int *i){
-    int j;
-    /*copy rest of line*/
-    for(j = 0;*i <= MAX_LINE_LENGTH && line.code[*i] != '\n'&& line.code[*i] != '\r';j++,(*i)++){
-        restOfLine[j]=line.code[*i];
-    }
-
-    restOfLine[j]='\0';
-
-}
