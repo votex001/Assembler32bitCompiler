@@ -15,7 +15,7 @@ typedef enum bool {
 #define MAX_LINE_LENGTH 80
 
 /* Initial IC value */
-#define IC_INIt_VAL 100
+#define IC_INIT_VAL 100
 
 typedef struct cur_line
 {

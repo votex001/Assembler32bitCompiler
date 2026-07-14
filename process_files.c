@@ -11,7 +11,7 @@
 
 
 void processFiles(char *fullName){
-    long ic = IC_INIT_VALUE,dc = 0;
+    long ic = IC_INIT_VAL,dc = 0;
     cur_line line;
     char temp_str[MAX_LINE_LENGTH + 2];
     
