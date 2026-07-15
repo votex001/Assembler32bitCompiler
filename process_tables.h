@@ -1,13 +1,15 @@
 #ifndef PROCCESS_TABLES_H
 #define PROCCESS_TABLES_H
+#include "global.h"
+
 
 
 typedef struct symbol
 {
     unsigned int address;
-    char *label;
+    char *name;
     bool isData;
-    struct symbol next;
+    struct symbol *next;
 }symbol;
 
 typedef symbol *symbolTable;
@@ -16,10 +18,10 @@ typedef symbol *symbolTable;
 typedef struct singleCodeLine {
     unsigned int machine_word;
     char *label;
-    struct singleCodeLine next;
+    struct singleCodeLine *next;
 } singleCodeLine;
 
-typedef singleCodeLine *codeImage;
+typedef singleCodeLine *codeImageTable;
 
 
 

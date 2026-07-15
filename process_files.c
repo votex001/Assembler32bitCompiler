@@ -6,6 +6,7 @@
 #include "global.h"
 #include "first_pass.h"
 #include "macro_table.h"
+#include "process_tables.h"
 
 
 
@@ -38,7 +39,6 @@ void processFiles(char *fullName){
             return;
         }
     }
-
 
     deleteMacroTable();
     free(line.fileName);

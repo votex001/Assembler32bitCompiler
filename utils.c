@@ -17,6 +17,7 @@ void *mallocWithCheck(long size){
     return ptr;
 }
 
+
 void *reallocWithCheck(void *ptr,long size){
 
     void *new_ptr = realloc(ptr, size);
@@ -63,6 +64,7 @@ void skipSpaces(char *str, int *i){
     (*i)++;
 }
 
+
 bool isFirstWordLabel(const cur_line line,char *nextWord,int *i){
     int j;
     j = 0;
@@ -91,6 +93,7 @@ bool isValidLabel(const char *label){
 
 }
 
+
 bool isAlphanumeric(const char *str){
     int i;
 
@@ -101,6 +104,7 @@ bool isAlphanumeric(const char *str){
 
     return TRUE;
 }
+
 
 bool isReservedWord(const char *word){
     funct func;
@@ -120,4 +124,16 @@ bool isReservedWord(const char *word){
 
 bool isEmptyStr(char *str,int i){
     return (!str[i] || str[i] == '\n' || str[i] == ';' || str[i] == '\r');
+}
+
+
+bool is_int(char *string) {
+	int i = 0;
+	if (string[0] == '-' || string[0] == '+') string++; 
+	for (; string[i]; i++) {
+		if (!isdigit(string[i])) {
+			return FALSE;
+		}
+	}
+	return i > 0; 
 }
