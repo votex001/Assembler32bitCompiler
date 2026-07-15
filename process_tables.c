@@ -16,8 +16,8 @@ unsigned char *dataImg; /*1 byte per cell*/
 
 
 /*TODO: save labels*/
-/*TODO: save machinCode*/
-/*TODO: save datamachine word*/
+/*TODO: save machinCode func that check if it codeImg or dataImg*/
+
 void saveByte(unsigned int value, long *dc)
 {
     dataImg[(*dc)++] = value & 0xFF;
