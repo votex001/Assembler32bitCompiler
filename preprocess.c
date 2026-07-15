@@ -63,7 +63,7 @@ void expandMacros(cur_line line,bool *is_success,bool *skip_current_macro,bool *
 
     skipSpaces(line.code,&i);
 
-    if(!line.code[i] || line.code[i] == '\n' || line.code[i] == ';')
+    if(isEmptyStr(line.code,i))
         return;/*comment or empty string - skip*/
 
     
