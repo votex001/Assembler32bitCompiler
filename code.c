@@ -52,8 +52,8 @@ struct cmdDirectiveEl {
 
 struct cmdDirectiveEl dirTable[] = {
     {".db",DB_DIR,1},/*per number*/
-    {".dw",DW_DIR,4},/*per number*/
     {".dh",DH_DIR,2},/*per number*/
+    {".dw",DW_DIR,4},/*per number*/
     {".asciz",ASCIZ_DIR,1},/*per symbol*/
     {".extern",EXTERN_DIR,0},
     {".entry",ENTRY_DIR,0},
