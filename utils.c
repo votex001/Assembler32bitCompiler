@@ -125,3 +125,15 @@ bool isReservedWord(const char *word){
 bool isEmptyStr(char *str,int i){
     return (!str[i] || str[i] == '\n' || str[i] == ';' || str[i] == '\r');
 }
+
+
+bool is_int(char *string) {
+	int i = 0;
+	if (string[0] == '-' || string[0] == '+') string++; 
+	for (; string[i]; i++) {
+		if (!isdigit(string[i])) {
+			return FALSE;
+		}
+	}
+	return i > 0; 
+}
