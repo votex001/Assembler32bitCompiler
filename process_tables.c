@@ -14,6 +14,13 @@ codeImageTable codeHead;
 long arrCounter = 100;/*cheack in func if dc == arrCounter realoc dataImg  +100*/
 unsigned char *dataImg; /*1 byte per cell*/
 
+/*halper functions */
+void saveByte(unsigned int value, long *dc);
+bool checkRange(long value, unsigned int bytes);
+void saveNumber(long value, directive dir, long *dc);
+void saveInstructionCode(unsigned int machineCode,bool is_jump,char *label,long IC);
+
+
 
 /*TODO: save labels*/
 /*TODO: save machinCode func that check if it codeImg or dataImg*/
@@ -206,7 +213,7 @@ bool checkRange(long value, unsigned int bytes)
             max = INT_MAX;
             break;
         default:
-            return false;
+            return FALSE;
     }
 
     return value >= min && value <= max;
