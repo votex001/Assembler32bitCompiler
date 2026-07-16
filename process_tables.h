@@ -16,8 +16,10 @@ typedef symbol *symbolTable;
 
 
 typedef struct singleCodeLine {
-    unsigned int machine_word;
+    unsigned int machineCode;
+    bool is_jmp;
     char *label;
+    long IC;
     struct singleCodeLine *next;
 } singleCodeLine;
 

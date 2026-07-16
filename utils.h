@@ -15,4 +15,5 @@ void *mallocWithCheck(long size);
 void *reallocWithCheck(void *ptr,long size);
 bool isEmptyStr(char *str,int i);
 bool is_int(char *string);
+/*TODO: getNextWord()*/
 #endif
