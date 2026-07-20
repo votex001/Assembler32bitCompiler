@@ -22,6 +22,7 @@ void compileFile(char *fileName){
     FILE *file_address;
     char *nameWithOtherExt;
 
+    /*checking if correct extension*/
     if(!isCorrectFileName(fileName)){
         printf("Error: can't open file %s - incorrect format.Skipped.\n",fileName);
         return;
@@ -33,9 +34,9 @@ void compileFile(char *fileName){
         printf("Error: file %s is inaccessible for reading.Skipped.\n",fileName);
         return;
     }
+    /*if we created .am we can start do first pas and second*/
     if(preprocessFile(file_address,fileName)){
        processFiles(fileName);
-    
     };
 
     
