@@ -5,7 +5,7 @@
 #include "global.h"
 
 
-bool fpassLine(cur_line line,long *ic,long *dc,FILE *obFile);
+bool fpassLine(cur_line line,long *ic,long *dc);
 
 
 #endif
