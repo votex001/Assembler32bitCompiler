@@ -18,22 +18,91 @@ unsigned char *dataImg; /*1 byte per cell*/
 void saveByte(unsigned int value, long *dc);
 bool checkRange(long value, unsigned int bytes);
 void saveNumber(long value, directive dir, long *dc);
-void saveInstructionCode(unsigned int machineCode,bool is_jump,char *label,long IC);
+void saveInstructionCode(unsigned int machineCode,bool withLabel,char *label,long IC);
+symbol *createSymbol(long address,char *name, bool isData );
 
 
 
-/*TODO: save labels*/
-/*TODO: save machinCode func that check if it codeImg or dataImg*/
+/*TODO: add delete table of LABELS*/
+/*TODO: add delete table of INST CODE*/
+/*TODO: add delete table of DATA CODE*/
 
 
 
+/*saving symbol to Table NOT CHECKING IF LABEL EXIST*/
+void saveSymbols(char *name,bool isData,long address){
+    symbolTable current;
+    symbol *newSymbol = createSymbol(address,name,isData);
+    
+    /*we need to check if label exist separate from this func to return ERROR*/
+
+    
+    /*1st half of list will be isData second instructions*/
+    if(symbolHead == NULL || symbolHead->address > address){
+        newSymbol->next = symbolHead;
+        symbolHead = newSymbol;
+        return;
+    }
+
+    current = symbolHead;
+
+    /*finding our label by name*/
+    while(current->next != NULL && current->next->address < address)
+        current = current->next;
+
+    /*we adding or in the end of list or in the middle*/
+    if(current->next == NULL){
+        current->next = newSymbol;
+    }else{
+        newSymbol->next = current->next;
+        current->next = newSymbol;
+    }
+}
+
+
+void  saveJTypeInst(opcode opcode,bool is_reg,char *label,unsigned char reg,long IC){
+    unsigned int machineCode = 0;
+    if(is_reg){
+        machineCode = ((opcode & 0x3f) << 26) | (1 << 25) | reg;
+        saveInstructionCode(machineCode,FALSE,NULL,IC);
+    }else{
+        machineCode = ((opcode & 0x3f) << 26);
+        saveInstructionCode(machineCode,TRUE,label,IC);
+    }
+}
+
+void saveITypeInst(opcode opcode,bool isLabel,char *label,unsigned char rs,unsigned char rt,unsigned short immed,long IC){
+    unsigned int machineCode = ((opcode & 0x3f) << 26) |
+                               ((rs & 0x1f) << 21) |
+                               ((rt & 0x1f) << 16);
+    
+    if(!isLabel){   
+        machineCode = machineCode | immed; /*<- immed 16 bit in 1st 16 bits*/
+        saveInstructionCode(machineCode,FALSE,NULL,IC);
+    }else{
+        saveInstructionCode(machineCode,TRUE,label,IC);
+    }
+        
+
+}
+
+void saveRTypeInst(opcode opcode,unsigned char rs,
+                            unsigned char rt,unsigned char rd,unsigned char funct,long IC)
+{
+    unsigned int machineCode = 0;
+    if(opcode == 0){
+        machineCode = ((opcode & 0x3f) << 26) |
+                      ((rs & 0x1f) << 21) |
+                      ((rt & 0x1f) << 16) |
+                      ((rd & 0x1f) << 11) |
+                      ((funct & 0x1f) << 6);
+        saveInstructionCode(machineCode,FALSE,NULL,IC);
+    }
+}
 
 
 
-
-
-
-bool saveDataCode(char *code,directive dir, int size,long *dc,char *error){
+bool saveDataCode(char *valueToSave,directive dir, int size,long *dc,cur_line line){
 
     long value;
     int i;
@@ -49,27 +118,27 @@ bool saveDataCode(char *code,directive dir, int size,long *dc,char *error){
         exit(1);
     }
 
-    
-    
-    if(((*dc) + strlen(code)) >= arrCounter){
+    if(((*dc) + strlen(valueToSave)) >= arrCounter){
         dataImg = reallocWithCheck(dataImg,arrCounter + 100);
     }
     if(dir == ASCIZ_DIR){
-        i = 0;
-        while (i<MAX_LINE_LENGTH&& code[i] && code[i]!='\0')
+        
+        /*skippin " at start and in the end of"*/
+        i = 1;
+        while (i<MAX_LINE_LENGTH&& valueToSave[i] &&valueToSave[i]!='"' &&valueToSave[i]!='\0')
         {
-            saveByte(code[i],dc);
+            saveByte(valueToSave[i],dc);
             i++;
         }
         saveByte('\0', dc);
     }else if(dir == DB_DIR || dir == DH_DIR || dir == DW_DIR){
-        if(!is_int(code)){
-            strcpy(error,"not a num");
+        if(!is_int(valueToSave)){
+            printf("%s.as:%ld: error: value %s might be integer.\n",line.fileName,line.num,valueToSave);
             return FALSE;
         }
-        value = strtol(code,NULL,10);
+        value = strtol(valueToSave,NULL,10);
         if(!checkRange(value,size)){
-            strcpy(error,"number overflow");
+            printf("%s.as:%ld: error: value %s is out of %d-byte range.\n",line.fileName,line.num,valueToSave,size);
             return FALSE;
         }
         saveNumber(value,dir,dc);
@@ -81,6 +150,24 @@ bool saveDataCode(char *code,directive dir, int size,long *dc,char *error){
 
 /*from here helper functions*/
 
+
+bool isSymbolExist(char *name){
+    symbolTable current = symbolHead;
+
+    if(current == NULL){
+        return FALSE;
+    }
+
+    while(current != NULL){
+        if(strcmp(current->name,name) == 0){
+            return TRUE;
+        }
+        current = current->next;
+    }
+
+    
+    return FALSE;
+}
 
 singleCodeLine *createCodeLine(unsigned int machine_word,char *label,struct singleCodeLine *next){
     singleCodeLine *newCodeLine = mallocWithCheck(sizeof(*newCodeLine));
@@ -97,7 +184,7 @@ singleCodeLine *createCodeLine(unsigned int machine_word,char *label,struct sing
     return newCodeLine;
 }
 
-symbol *createSymbol(unsigned int address,char *name, bool isData ){
+symbol *createSymbol(long address,char *name, bool isData ){
     symbol *newSymbol = mallocWithCheck(sizeof(*newSymbol));
     newSymbol->address = address;
     newSymbol->name = mallocWithCheck(strlen(name) + 1);
@@ -110,53 +197,13 @@ symbol *createSymbol(unsigned int address,char *name, bool isData ){
 
 
 
-void  saveJTypeInst(opcode opcode,bool is_reg,char *label,unsigned char reg,long IC){
-    unsigned int machineCode = 0;
-    if(is_reg){
-        machineCode = ((opcode & 0x3f) << 26) | (1 << 25) | reg;
-        saveInstructionCode(machineCode,FALSE,NULL,IC);
-    }else{
-        machineCode = ((opcode & 0x3f) << 26);
-        saveInstructionCode(machineCode,TRUE,label,IC);
-    }
-}
-
-void saveITypeInst(opcode opcode,unsigned char rs,unsigned char rt,unsigned short immed,long IC){
-    unsigned int machineCode = 0;
-
-    /*saving  I*/
-        machineCode = ((opcode & 0x3f) << 26) |
-                      ((rs & 0x1f) << 21) |
-                      ((rt & 0x1f) << 16) | immed; /*<- immed 16 bit in 1st 16 bits*/
-        saveInstructionCode(machineCode,FALSE,NULL,IC);
 
 
-}
-
-void saveRTypeInst(opcode opcode,unsigned char rs,
-                            unsigned char rt,unsigned char rd,unsigned char funct,long IC)
-{
-    unsigned int machineCode = 0;
-    if(opcode == 0){
-        machineCode = ((rs & 0x1f) << 21) |
-                      ((rt & 0x1f) << 16) |
-                      ((rd & 0x1f) << 11) |
-                      ((funct & 0x1f) << 6);
-        saveInstructionCode(machineCode,FALSE,NULL,IC);
-    }else if(opcode == 1){
-        machineCode = ((opcode & 0x3f) << 26) |
-                      ((rs & 0x1f) << 21) |
-                      ((rd & 0x1f) << 11) |
-                      ((funct & 0x1f) << 6);
-        saveInstructionCode(machineCode,FALSE,NULL,IC);
-    }
-}
-
-void saveInstructionCode(unsigned int machineCode,bool is_jump,char *label,long IC){
+void saveInstructionCode(unsigned int machineCode,bool withLabel,char *label,long IC){
     codeImageTable current = codeHead;
 
     codeImageTable newLine = mallocWithCheck(sizeof(*newLine));
-    newLine->is_jmp = is_jump;
+    newLine->hasLabel = withLabel;
     if(label){
         newLine->label = mallocWithCheck(strlen(label)+1);
         strcpy(newLine->label,label);
