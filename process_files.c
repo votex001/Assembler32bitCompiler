@@ -15,33 +15,28 @@ void processFiles(char *fullName){
     long ic = IC_INIT_VAL,dc = 0;
     cur_line line;
     char temp_str[MAX_LINE_LENGTH + 2];
+    bool isSuccess = TRUE;
     
  
     FILE *amFile;
-    FILE *obFile;
     line.code = temp_str;
     line.fileName = cutStr(fullName,".as");
     amFile = readFile(line.fileName,".am");
     if(amFile == NULL){
-        return;
-    }
-    obFile = writeFile(line.fileName,".ob");
-    if(obFile == NULL){
+        printf("Error: cant open %s.am, skip file.",line.fileName);
         return;
     }
 
+    /*goes line by line*/
     for(line.num = 1;fgets(temp_str,MAX_LINE_LENGTH+2,amFile)!=NULL;line.num++){
-        if(!fpassLine(line,&ic,&dc,obFile)){
-            fclose(amFile);
-            fclose(obFile);
-            deleteFile(line.fileName,".am");
-            deleteFile(line.fileName,".ob");
-            return;
+        if(!fpassLine(line,&ic,&dc)){
+            isSuccess = FALSE;
         }
     }
-
+    if(isSuccess){
+        printf("IC: %ld, DC: %ld",ic,dc);
+    }
     deleteMacroTable();
     free(line.fileName);
     fclose(amFile);
-    fclose(obFile);
 }
