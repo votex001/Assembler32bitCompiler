@@ -63,11 +63,13 @@ void expandMacros(cur_line line,bool *is_success,bool *skip_current_macro,bool *
 
     skipSpaces(line.code,&i);
 
-    if(isEmptyStr(line.code,i))
+    if(isEmptyStr(line.code,i)){
+        fputs(line.code,amFile);
         return;/*comment or empty string - skip*/
+    }
 
     
-    if(!isFirstWordLabel(line,savedWord,&i) && isMacroExist(savedWord)){
+    if(!isNextWordLabel(line,savedWord,&i) && isMacroExist(savedWord)){
         macroContent = getMacro(savedWord);
         fputs(macroContent,amFile);
         return;
@@ -84,7 +86,7 @@ void expandMacros(cur_line line,bool *is_success,bool *skip_current_macro,bool *
         *is_in_macro = TRUE;
         
       
-        getSecondWord(line,savedWord,&i);
+        getNextWord(line,savedWord,&i);
         strcpy(macro_name, savedWord);
         skipSpaces(line.code,&i);
         if(line.code[i] != '\n'){
@@ -133,22 +135,5 @@ void expandMacros(cur_line line,bool *is_success,bool *skip_current_macro,bool *
 }
 
 
-void getSecondWord(cur_line line,char *secondWord,int *i){
-    int j;
-    j = 0;
-   
-    skipSpaces(line.code,i);
-    /*copy second word*/
-    while(line.code[*i] &&line.code[*i] != ' ' &&
-        line.code[*i] != '\t' && 
-        line.code[*i] != '\n' &&
-        line.code[*i] != '\r')
-    {
-        secondWord[j++] = line.code[*i];
-        (*i)++;
-    }
-
-    secondWord[j] = '\0';
-}
 
 
