@@ -77,17 +77,27 @@ void getFuncOp(char *name, funct *func_out, opcode *op_out){
 
 }
 
-int getRegisterNum(const char *reg){
-    int digit;
-    if(reg[0] == '$' && isdigit(reg[1]) && reg[2] == '\0'){
-        digit = reg[1] - '0';/*convert*/
-        if(digit >= 0 && digit <= 31)
-            return digit;
+int getRegisterNum(const char *reg)
+{
+    int num = 0;
+    int i = 1; /*pass $*/
+
+    if (reg[0] != '$')
+        return -1;
+
+    while (isdigit(reg[i]))
+    {
+        num = num * 10 + (reg[i] - '0');
+        i++;
     }
-    /*not a register*/
+    /*after num need to be only \0*/
+    if (reg[i] != '\0')
+        return -1;
+
+    if (num >= 0 && num <= 31)
+        return num;
+
     return -1;
-
-
 }
 
 
