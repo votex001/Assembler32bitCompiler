@@ -65,7 +65,7 @@ void skipSpaces(char *str, int *i){
 }
 
 
-bool isFirstWordLabel(const cur_line line,char *nextWord,int *i){
+bool isNextWordLabel(const cur_line line,char *nextWord,int *i){
     int j;
     j = 0;
     skipSpaces(line.code,i);
@@ -80,7 +80,11 @@ bool isFirstWordLabel(const cur_line line,char *nextWord,int *i){
 
     nextWord[j] = '\0';
     
-    return line.code[*i] == ':';
+    if(line.code[*i] == ':'){
+        (*i)++;/*skip symbol*/
+        return TRUE;
+    }
+    return FALSE;
 
 
 }
@@ -88,7 +92,7 @@ bool isFirstWordLabel(const cur_line line,char *nextWord,int *i){
 
 bool isValidLabel(const char *label){
 
-    
+    /*page 35*/
     return label[0] && strlen(label) <= 31 && isalpha(label[0]) && isAlphanumeric(label+1) && !isReservedWord(label);
 
 }
@@ -123,7 +127,10 @@ bool isReservedWord(const char *word){
 
 
 bool isEmptyStr(char *str,int i){
-    return (!str[i] || str[i] == '\n' || str[i] == ';' || str[i] == '\r');
+    if(!str[i] || str[i] == '\n' || str[i] == ';' || str[i] == '\r'){
+        return TRUE;
+    }
+    return FALSE;
 }
 
 
@@ -136,4 +143,44 @@ bool is_int(char *string) {
 		}
 	}
 	return i > 0; 
+}
+
+
+
+void getNextWord(cur_line line,char *nextWord,int *i){
+    int j;
+    j = 0;
+   
+    skipSpaces(line.code,i);
+    /*copy second word*/
+    while(j<MAX_LINE_LENGTH + 1 && line.code[*i]&& line.code[*i] != ',' &&line.code[*i] != ' ' &&
+        line.code[*i] != '\t' && 
+        line.code[*i] != '\n' &&
+        line.code[*i] != '\r')
+    {
+        nextWord[j++] = line.code[*i];
+        (*i)++;
+    }
+
+    nextWord[j] = '\0';
+}
+bool isCommaNext(cur_line line,int *i,char *firstWord,char *nexWord){
+    skipSpaces(line.code,i);
+    if(isEmptyStr(line.code,*i) || line.code[*i] != ','){
+        printf("%s.as:%ld: error: miss parameters for ",line.fileName,line.num);
+        printf("command '%s', expected ',' after %s.\n",firstWord,nexWord);
+        return FALSE;
+    }    
+    /*we got comma and skip it*/
+    (*i)++;
+    return TRUE;       
+}
+
+bool isTextAfterCommand(cur_line line,int *i,char* commandName){
+    skipSpaces(line.code,i);
+    if(!isEmptyStr(line.code,*i)){
+        printf("%s.as:%ld: error: extra text after command %s\n",line.fileName,line.num,commandName);
+        return TRUE;
+    }
+    return FALSE;
 }
