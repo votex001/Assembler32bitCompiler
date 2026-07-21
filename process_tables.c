@@ -160,7 +160,7 @@ void saveITypeInst(opcode opcode,bool isLabel,char *label,unsigned char rs,unsig
 }
 
 void saveRTypeInst(opcode opcode,unsigned char rs,
-                            unsigned char rt,unsigned char rd,unsigned char funct,long IC,long)
+                            unsigned char rt,unsigned char rd,unsigned char funct,long IC)
 {
     unsigned int machineCode = 0;
     if(opcode == 0){
