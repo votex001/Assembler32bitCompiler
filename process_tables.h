@@ -18,8 +18,10 @@ typedef symbol *symbolTable;
 typedef struct singleCodeLine {
     unsigned int machineCode;
     bool hasLabel;
+    bool isI;/*in second pass we will count steps of I instructions*/
     char *label;
     long IC;
+    long lineNum;
     struct singleCodeLine *next;
 } singleCodeLine;
 
@@ -41,8 +43,8 @@ typedef singleExtern *codeExternCallTable;
 
 bool isSymbolExist(char *name);
 void saveSymbols(char *name,bool isData,long address);
-void saveJTypeInst(opcode opcode,bool isReg,char *label,unsigned char reg,long IC);
-void saveITypeInst(opcode opcode,bool isLabel,char *label,unsigned char rs,unsigned char rt,unsigned short immed,long IC);
+void saveJTypeInst(opcode opcode,bool isReg,char *label,unsigned char reg,long IC,long lineNum);
+void saveITypeInst(opcode opcode,bool isLabel,char *label,unsigned char rs,unsigned char rt,unsigned short immed,long IC,long lineNum);
 void saveRTypeInst(opcode opcode,unsigned char rs,unsigned char rt,unsigned char rd,unsigned char funct,long IC);
 bool saveDataCode(char *valueToSave,directive dir, int size,long *dc,cur_line line);
 bool checkRange(long value, unsigned int bytes);

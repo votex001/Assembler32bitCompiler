@@ -19,7 +19,7 @@ unsigned char *dataImg; /*1 byte per cell*/
 void saveByte(unsigned int value, long *dc);
 bool checkRange(long value, unsigned int bytes);
 void saveNumber(long value, directive dir, long *dc);
-void saveInstructionCode(unsigned int machineCode,bool withLabel,char *label,long IC);
+void saveInstructionCode(unsigned int machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI);
 symbol *createSymbol(long address,char *name, bool isData );
 
 
@@ -133,27 +133,29 @@ void saveSymbols(char *name,bool isData,long address){
 }
 
 
-void saveJTypeInst(opcode opcode,bool isReg,char *label,unsigned char reg,long IC){
+void saveJTypeInst(opcode opcode,bool isReg,char *label,unsigned char reg,long IC,long lineNum){
     unsigned int machineCode = 0;
     if(isReg){
         machineCode = ((opcode & 0x3f) << 26) | (1 << 25) | reg;
-        saveInstructionCode(machineCode,FALSE,NULL,IC);
+        saveInstructionCode(machineCode,FALSE,NULL,IC,0,FALSE);
     }else{
         machineCode = ((opcode & 0x3f) << 26);
-        saveInstructionCode(machineCode,TRUE,label,IC);
+        /*saving line num to tell in second pass were label that undeclarated*/
+        saveInstructionCode(machineCode,TRUE,label,IC,lineNum,FALSE);
     }
 }
 
-void saveITypeInst(opcode opcode,bool isLabel,char *label,unsigned char rs,unsigned char rt,unsigned short immed,long IC){
+void saveITypeInst(opcode opcode,bool isLabel,char *label,unsigned char rs,unsigned char rt,unsigned short immed,long IC,long lineNum){
     unsigned int machineCode = ((opcode & 0x3f) << 26) |
                                ((rs & 0x1f) << 21) |
                                ((rt & 0x1f) << 16);
     
     if(!isLabel){   
         machineCode = machineCode | immed; /*<- immed 16 bit in 1st 16 bits*/
-        saveInstructionCode(machineCode,FALSE,NULL,IC);
+        saveInstructionCode(machineCode,FALSE,NULL,IC,0,TRUE);
     }else{
-        saveInstructionCode(machineCode,TRUE,label,IC);
+        /*saving line num to tell in second pass were label that undeclarated*/
+        saveInstructionCode(machineCode,TRUE,label,IC,lineNum,TRUE);
     }
         
 
@@ -169,7 +171,7 @@ void saveRTypeInst(opcode opcode,unsigned char rs,
                       ((rt & 0x1f) << 16) |
                       ((rd & 0x1f) << 11) |
                       ((funct & 0x1f) << 6);
-        saveInstructionCode(machineCode,FALSE,NULL,IC);
+        saveInstructionCode(machineCode,FALSE,NULL,IC,0,FALSE);
     }
 }
 
@@ -295,7 +297,7 @@ symbol *createSymbol(long address,char *name, bool isData ){
 
 
 
-void saveInstructionCode(unsigned int machineCode,bool withLabel,char *label,long IC){
+void saveInstructionCode(unsigned int machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI){
     codeImageTable current = codeHead;
 
     codeImageTable newLine = mallocWithCheck(sizeof(*newLine));
@@ -308,6 +310,8 @@ void saveInstructionCode(unsigned int machineCode,bool withLabel,char *label,lon
     }
     newLine->machineCode = machineCode;
     newLine->IC = IC;
+    newLine->isI = isI;/*in second pass we will count steps of I instructions*/
+    newLine->lineNum = lineNum;
     newLine->next = NULL;
 
     /*no codeLines before*/
