@@ -133,9 +133,9 @@ void saveSymbols(char *name,bool isData,long address){
 }
 
 
-void  saveJTypeInst(opcode opcode,bool is_reg,char *label,unsigned char reg,long IC){
+void saveJTypeInst(opcode opcode,bool isReg,char *label,unsigned char reg,long IC){
     unsigned int machineCode = 0;
-    if(is_reg){
+    if(isReg){
         machineCode = ((opcode & 0x3f) << 26) | (1 << 25) | reg;
         saveInstructionCode(machineCode,FALSE,NULL,IC);
     }else{
@@ -160,7 +160,7 @@ void saveITypeInst(opcode opcode,bool isLabel,char *label,unsigned char rs,unsig
 }
 
 void saveRTypeInst(opcode opcode,unsigned char rs,
-                            unsigned char rt,unsigned char rd,unsigned char funct,long IC)
+                            unsigned char rt,unsigned char rd,unsigned char funct,long IC,long)
 {
     unsigned int machineCode = 0;
     if(opcode == 0){
