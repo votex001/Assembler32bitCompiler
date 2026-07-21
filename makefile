@@ -1,7 +1,7 @@
 
 FLAGS = -ansi -Wall -pedantic
 OTHER = global.h
-OBJECTS = assembler.o utils.o preprocess.o macro_table.o file_utils.o code.o process_files.o first_pass.o process_tables.o
+OBJECTS = assembler.o utils.o preprocess.o macro_table.o file_utils.o code.o process_files.o first_pass.o process_tables.o original_file_table.o
 
 
 assembler: ${OBJECTS} ${OTHER}
@@ -32,3 +32,6 @@ first_pass.o: first_pass.c first_pass.h ${OTHER}
 	
 process_tables.o: process_tables.c process_tables.h ${OTHER}
 	gcc -c process_tables.c ${FLAGS} -o $@
+
+original_file_table.o: original_file_table.c original_file_table.h ${OTHER}
+	gcc -c original_file_table.c ${FLAGS} -o $@
