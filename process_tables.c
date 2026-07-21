@@ -23,9 +23,18 @@ symbol *createSymbol(long address,char *name, bool isData );
 
 
 
-/*TODO: add delete table of LABELS*/
-/*TODO: add delete table of INST CODE*/
-/*TODO: add delete table of DATA CODE*/
+/*TODO: delete table of LABELS*/
+/*TODO: delete table of INST CODE*/
+/*TODO: delete table of DATA CODE*/
+/*TODO: get symbol */
+/*TODO: get data */
+/*TODO: get instruction */
+/*TODO: get extern */
+/*TODO: get entry */
+/*TODO: save extern */
+/*TODO: save entry */
+
+
 
 
 
@@ -119,7 +128,8 @@ bool saveDataCode(char *valueToSave,directive dir, int size,long *dc,cur_line li
     }
 
     if(((*dc) + strlen(valueToSave)) >= arrCounter){
-        dataImg = reallocWithCheck(dataImg,arrCounter + 100);
+        arrCounter += 100;
+        dataImg = reallocWithCheck(dataImg,arrCounter);
     }
     if(dir == ASCIZ_DIR){
         
