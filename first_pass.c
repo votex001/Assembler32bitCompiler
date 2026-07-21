@@ -54,7 +54,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
         }
         getDirectiveByName(savedLabelName,&directive,&size);
         getFuncOp(savedLabelName,&funct,&opcode);
-        if(directive != NONE_DIR){
+        if(directive >= DH_DIR  && directive <= ASCIZ_DIR){
             saveSymbols(savedLabelName,TRUE,*dc);
         }else if(opcode != NONE_OP){
             saveSymbols(savedLabelName,FALSE,*ic);
@@ -97,10 +97,15 @@ bool fpassLine(cur_line line,long *ic,long *dc){
         /*getting now info about comman from second word*/
         getDirectiveByName(nextWord,&directive,&size);
         getFuncOp(nextWord,&funct,&opcode);
-        if(directive != NONE_DIR){
+        /*if non dererctive or extern or entry just pass*/
+        if(directive >= DH_DIR  && directive <= ASCIZ_DIR){
             saveSymbols(firstWord,TRUE,*dc);
         }else if(opcode != NONE_OP){
             saveSymbols(firstWord,FALSE,*ic);
+        }
+
+        if(directive == EXTERN_DIR || directive == ENTRY_DIR){
+            printf("%s.as:%ld: warning: label '%s' before directive '%s' is ignored.\n",line.fileName, line.num, firstWord, nextWord);
         }
 
         /*after we saved label we need to move first word to second one (command)*/
