@@ -10,9 +10,10 @@
 /*global tables*/
 symbolTable symbolHead;
 codeImageTable codeHead;
+codeExternTable externHead;
 
-long arrCounter = 100;/*cheack in func if dc == arrCounter realoc dataImg  +100*/
-unsigned char *dataImg; /*1 byte per cell*/
+
+unsigned char *dataImg = NULL; /*1 byte per cell*/
 
 /*halper functions */
 void saveByte(unsigned int value, long *dc);
@@ -26,17 +27,75 @@ symbol *createSymbol(long address,char *name, bool isData );
 /*TODO: delete table of LABELS*/
 /*TODO: delete table of INST CODE*/
 /*TODO: delete table of DATA CODE*/
-/*TODO: get symbol */
+/*TODO: delete table of extern*/
+/*TODO: delete table of externCall*/
+/*TODO: delete table of entry*/
 /*TODO: get data */
 /*TODO: get instruction */
-/*TODO: get extern */
 /*TODO: get entry */
-/*TODO: save extern */
+/*TODO: getExternCall*/
 /*TODO: save entry */
 
 
+symbolTable getSymbol(char *name){
+    symbolTable newExtern;
+    symbolTable current = symbolHead;
+
+    if(current == NULL){
+        return NULL;
+    }
+
+    while(current->next != NULL && strcmp(current->name,name) != 0){
+        current = current->next;
+    }
+
+    if(strcmp(current->name,name) != 0){
+        return NULL;
+    }else{
+        newExtern = mallocWithCheck(sizeof(*newExtern));
+        newExtern->name = mallocWithCheck(strlen(name)+1);
+        strcpy(newExtern->name,current->name);
+        newExtern->address = current->address;
+        newExtern->next = NULL;
+        return newExtern;
+    }
+}
+
+bool isExternExist(char *name){
+    codeExternTable current = externHead;
+    if(current == NULL){
+        return FALSE;
+    }
+    while(current->next != NULL && strcmp(current->label,name) != 0){
+        current = current->next;
+    }
+    return (strcmp(current->label,name) == 0)?TRUE:FALSE;
+}
 
 
+
+void saveExtern(char *name){
+    codeExternTable current = externHead;
+    codeExternTable newExtern;
+
+    
+    if(isExternExist(name)){
+        return;
+    }
+    
+    newExtern = mallocWithCheck(sizeof(*newExtern));
+    newExtern->label = mallocWithCheck(strlen(name));
+    newExtern->next = NULL;
+
+    if(externHead == NULL){
+        externHead = newExtern;
+    }
+
+    while(current->next !=NULL){
+        current = current->next;
+    }
+    current->next = newExtern;
+}
 
 /*saving symbol to Table NOT CHECKING IF LABEL EXIST*/
 void saveSymbols(char *name,bool isData,long address){
@@ -115,22 +174,21 @@ bool saveDataCode(char *valueToSave,directive dir, int size,long *dc,cur_line li
 
     long value;
     int i;
+    long neededSize;
     
-
-    if(dataImg == NULL){
-        dataImg = mallocWithCheck(arrCounter);
+    if(dir == ASCIZ_DIR){
+        neededSize = strlen(valueToSave) - 1;
+    }else{
+        neededSize = size;
     }
-    /*page 23 2^25 max size*/
-    if ((*dc) >=(1 << 25))
+
+    if(*dc + neededSize > (1L << 25))
     {
         printf("Memory overflow\n");
         exit(1);
     }
 
-    if(((*dc) + strlen(valueToSave)) >= arrCounter){
-        arrCounter += 100;
-        dataImg = reallocWithCheck(dataImg,arrCounter);
-    }
+    dataImg = reallocWithCheck(dataImg, *dc + neededSize);
     if(dir == ASCIZ_DIR){
         
         /*skippin " at start and in the end of"*/
@@ -230,12 +288,6 @@ void saveInstructionCode(unsigned int machineCode,bool withLabel,char *label,lon
         return;
     }
 
-    /*saving before head*/
-    if(newLine->IC < codeHead->IC){
-        newLine->next = codeHead;
-        codeHead = newLine;
-        return;
-    }
     /*sorting by IC*/
     while (current->next != NULL && current->next->IC < newLine->IC)
     {

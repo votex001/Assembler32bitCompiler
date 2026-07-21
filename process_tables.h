@@ -25,6 +25,20 @@ typedef struct singleCodeLine {
 
 typedef singleCodeLine *codeImageTable;
 
+typedef struct singleExtern {
+    char *label;
+    struct singleExtern *next;
+} singleExtern;
+
+typedef singleExtern *codeExternTable;
+
+typedef struct singleExternCallPlace {
+    char *label;
+    struct singleExternCallPlace *next;
+} singleExternCallPlace;
+
+typedef singleExtern *codeExternCallTable;
+
 bool isSymbolExist(char *name);
 void saveSymbols(char *name,bool isData,long address);
 void saveJTypeInst(opcode opcode,bool is_reg,char *label,unsigned char reg,long IC);
@@ -32,6 +46,7 @@ void saveITypeInst(opcode opcode,bool isLabel,char *label,unsigned char rs,unsig
 void saveRTypeInst(opcode opcode,unsigned char rs,unsigned char rt,unsigned char rd,unsigned char funct,long IC);
 bool saveDataCode(char *valueToSave,directive dir, int size,long *dc,cur_line line);
 bool checkRange(long value, unsigned int bytes);
+symbolTable getSymbol(char *name);
 
 
 
