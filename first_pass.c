@@ -278,6 +278,11 @@ bool fpassLine(cur_line line,long *ic,long *dc){
         }
     }
 
+    if(directive == EXTERN_DIR){
+        saveExtern(firstWord);
+        return TRUE;
+    }
+
     
     return TRUE;
 }
