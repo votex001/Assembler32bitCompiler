@@ -12,8 +12,8 @@ symbolTable symbolHead;
 codeImageTable codeHead;
 codeExternTable externHead;
 
-
-unsigned char *dataImg = NULL; /*1 byte per cell*/
+long arrCounter = 100;/*cheack in func if dc == arrCounter realoc dataImg  +100*/
+unsigned char *dataImg; /*1 byte per cell*/
 
 /*halper functions */
 void saveByte(unsigned int value, long *dc);
@@ -85,10 +85,12 @@ void saveExtern(char *name){
     
     newExtern = mallocWithCheck(sizeof(*newExtern));
     newExtern->label = mallocWithCheck(strlen(name));
+    strcpy(newExtern->label,name);
     newExtern->next = NULL;
 
     if(externHead == NULL){
         externHead = newExtern;
+        return;
     }
 
     while(current->next !=NULL){
@@ -174,23 +176,30 @@ bool saveDataCode(char *valueToSave,directive dir, int size,long *dc,cur_line li
 
     long value;
     int i;
-    long neededSize;
+
+
+    if(dataImg == NULL){
+        dataImg = mallocWithCheck(arrCounter);
+    }
+
+
     
     if(dir == ASCIZ_DIR){
-        neededSize = strlen(valueToSave) - 1;
-    }else{
-        neededSize = size;
-    }
 
-    if(*dc + neededSize > (1L << 25))
-    {
-        printf("Memory overflow\n");
-        exit(1);
-    }
+            /*page 23 2^25 max size*/
+            if (((*dc) + strlen(valueToSave)) >=(1 << 25))
+            {
+                printf("Memory overflow\n");
+                exit(1);
+            }
 
-    dataImg = reallocWithCheck(dataImg, *dc + neededSize);
-    if(dir == ASCIZ_DIR){
-        
+            if((*dc) + strlen(valueToSave) >= arrCounter){
+                while((*dc) + strlen(valueToSave) >= arrCounter){
+                    arrCounter += 100;
+                }
+                dataImg = reallocWithCheck(dataImg,arrCounter);
+            }
+
         /*skippin " at start and in the end of"*/
         i = 1;
         while (i<MAX_LINE_LENGTH&& valueToSave[i] &&valueToSave[i]!='"' &&valueToSave[i]!='\0')
@@ -200,15 +209,31 @@ bool saveDataCode(char *valueToSave,directive dir, int size,long *dc,cur_line li
         }
         saveByte('\0', dc);
     }else if(dir == DB_DIR || dir == DH_DIR || dir == DW_DIR){
+
+        /*page 23 2^25 max size*/
+        if (((*dc) + size) >=(1 << 25)){
+            printf("Memory overflow\n");
+            exit(1);
+        }
+        if((*dc) + size >= arrCounter){
+            while((*dc) + size >= arrCounter){
+                arrCounter += 100;
+            }
+            dataImg = reallocWithCheck(dataImg,arrCounter);   
+        }
+
         if(!is_int(valueToSave)){
             printf("%s.as:%ld: error: value %s might be integer.\n",line.fileName,line.num,valueToSave);
             return FALSE;
         }
+
         value = strtol(valueToSave,NULL,10);
+
         if(!checkRange(value,size)){
             printf("%s.as:%ld: error: value %s is out of %d-byte range.\n",line.fileName,line.num,valueToSave,size);
             return FALSE;
         }
+
         saveNumber(value,dir,dc);
     } 
     return TRUE;
