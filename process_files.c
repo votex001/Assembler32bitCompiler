@@ -7,6 +7,7 @@
 #include "first_pass.h"
 #include "macro_table.h"
 #include "process_tables.h"
+#include "original_file_table.h"
 
 
 
@@ -20,21 +21,22 @@ void processFiles(char *fullName){
  
     FILE *amFile;
     line.code = temp_str;
+    line.num = getLineNum(line.code);
     line.fileName = cutStr(fullName,".as");
     amFile = readFile(line.fileName,".am");
     if(amFile == NULL){
         printf("Error: cant open %s.am, skip file.",line.fileName);
         return;
     }
-
     /*goes line by line*/
-    for(line.num = 1;fgets(temp_str,MAX_LINE_LENGTH+2,amFile)!=NULL;line.num++){
+    while(fgets(temp_str,MAX_LINE_LENGTH+2,amFile)!=NULL){
+        line.num = getLineNum(line.code);
         if(!fpassLine(line,&ic,&dc)){
             isSuccess = FALSE;
         }
     }
     if(isSuccess){
-        printf("IC: %ld, DC: %ld",ic,dc);
+        printf("IC: %ld, DC: %ld\n",ic,dc);
     }
     deleteMacroTable();
     free(line.fileName);
