@@ -47,6 +47,8 @@ void saveRTypeInst(opcode opcode,unsigned char rs,unsigned char rt,unsigned char
 bool saveDataCode(char *valueToSave,directive dir, int size,long *dc,cur_line line);
 bool checkRange(long value, unsigned int bytes);
 symbolTable getSymbol(char *name);
+void saveExtern(char *name);
+bool isExternExist(char *name);
 
 
 
