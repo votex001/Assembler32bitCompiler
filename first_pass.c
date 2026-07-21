@@ -74,6 +74,11 @@ bool fpassLine(cur_line line,long *ic,long *dc){
             printf("%s.as:%ld: error: label '%s' is already declared.\n",line.fileName,line.num,firstWord);
             return FALSE;
         }
+        if(isExternExist(firstWord)){
+            printf("%s.as:%ld: error: external label '%s' is already declared ",line.fileName, line.num, firstWord);
+            printf("and cannot be defined locally.\n");
+            return FALSE;
+        }
        
 
         if(isEmptyStr(line.code,i)){
@@ -140,6 +145,9 @@ bool fpassLine(cur_line line,long *ic,long *dc){
         /*get first param*/
         getNextWord(line,nextWord,&i);
         fParam = getRegisterNum(nextWord);
+
+        
+        
 
         /*J instructions only 1 param*/
         if(opcode >=30){
@@ -284,9 +292,22 @@ bool fpassLine(cur_line line,long *ic,long *dc){
     }
 
     if(directive == EXTERN_DIR){
-        saveExtern(firstWord);
+        getNextWord(line,nextWord,&i);
+        if(!isValidLabel(nextWord)){
+                printf("%s.as:%ld: error: invalid label '%s'. ",line.fileName,line.num,nextWord);
+                printf("Rules: 1-31 chars, starts with letter, not a reserved word\n");
+                return FALSE;
+        }
+        if(getSymbol(nextWord) != NULL){
+            printf("%s.as:%ld: error: label '%s' is already declared",line.fileName, line.num, nextWord);
+            printf("and cannot be declared as external.\n");
+            return FALSE;
+        }
+        saveExtern(nextWord);
         return TRUE;
     }
+
+    
 
     
     return TRUE;

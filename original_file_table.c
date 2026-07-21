@@ -6,6 +6,7 @@
 
 lineTable lineTableHead;
 
+/*TODO: delete table*/
 
 void saveLineInfo(cur_line line){
     lineTable current;

@@ -30,6 +30,9 @@ symbol *createSymbol(long address,char *name, bool isData );
 /*TODO: delete table of extern*/
 /*TODO: delete table of externCall*/
 /*TODO: delete table of entry*/
+
+/*second pass*/
+
 /*TODO: get data */
 /*TODO: get instruction */
 /*TODO: get entry */
@@ -78,7 +81,7 @@ void saveExtern(char *name){
     codeExternTable current = externHead;
     codeExternTable newExtern;
 
-    
+    /*page 41*/
     if(isExternExist(name)){
         return;
     }
@@ -308,7 +311,7 @@ void saveInstructionCode(unsigned int machineCode,bool withLabel,char *label,lon
     newLine->next = NULL;
 
     /*no codeLines before*/
-    if(current == NULL || IC < codeHead->IC){
+    if(current == NULL){
         codeHead = newLine;
         return;
     }
