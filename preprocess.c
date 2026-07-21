@@ -6,7 +6,7 @@
 #include "file_utils.h"
 #include "macro_table.h"
 #include "preprocess.h"
-
+#include "original_file_table.h"
 
 
 
@@ -39,6 +39,10 @@ bool preprocessFile(FILE *file,char *fileName){
     
     /*we going in file line by line*/
     for(line.num = 1;fgets(temp_str,MAX_LINE_LENGTH+2,file)!=NULL;line.num++){
+        if (strchr(temp_str, '\n') == NULL && !feof(file)) {
+			printf("%s.as: error: Line too long to process. Maximum line length should be %d.",line.fileName,MAX_LINE_LENGTH);
+            is_success = FALSE;
+        }
         expandMacros(line,&is_success,&skip_current_macro,&is_in_macro,macro_name,amFile);
     }
     fclose(amFile);
@@ -58,8 +62,8 @@ void expandMacros(cur_line line,bool *is_success,bool *skip_current_macro,bool *
     char restOfLine[MAX_LINE_LENGTH+2];
     const char *macroContent;
     i = j = 0;/*init*/
-
-
+    
+    saveLineInfo(line);
 
     skipSpaces(line.code,&i);
 
