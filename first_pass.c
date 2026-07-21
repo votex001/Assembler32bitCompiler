@@ -8,14 +8,15 @@
 #include "code.h"
 #include "process_tables.h"
 
-
+bool isLabelBefore = FALSE;
+char savedLabelName[MAX_LINE_LENGTH+2];
 
 
 
 bool fpassLine(cur_line line,long *ic,long *dc){
     int i = 0;/*char 0 in line*/
     char firstWord[MAX_LINE_LENGTH + 2];
-    char nexWord[MAX_LINE_LENGTH + 2];
+    char nextWord[MAX_LINE_LENGTH + 2];
     /*instruction*/
     opcode opcode;
     funct funct;
@@ -26,7 +27,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
     /*data*/
     directive directive;
     int size;
-
+    
 
     
     
@@ -37,6 +38,30 @@ bool fpassLine(cur_line line,long *ic,long *dc){
     if(isEmptyStr(line.code,i)){
         return TRUE;
     }
+    if(isLabelBefore){
+        isLabelBefore = FALSE;
+        if(isNextWordLabel(line,firstWord,&i)){
+            printf("%s.as:%ld: error: consecutive labels are not allowed.\n",line.fileName,line.num);
+            return FALSE;
+        }
+        /*need to be reserved word but not register*/
+        if(!isReservedWord(firstWord)){
+            printf("%s.as:%ld: error: invalid command '%s'\n",line.fileName,line.num,firstWord);
+            return FALSE;
+        }else if(getRegisterNum(firstWord) != -1){
+            printf("%s.as:%ld: error: invalid command '%s'\n",line.fileName,line.num,firstWord);
+            return FALSE;
+        }
+        getDirectiveByName(savedLabelName,&directive,&size);
+        getFuncOp(savedLabelName,&funct,&opcode);
+        if(directive != NONE_DIR){
+            saveSymbols(savedLabelName,TRUE,*dc);
+        }else if(opcode != NONE_OP){
+            saveSymbols(savedLabelName,FALSE,*ic);
+        }
+        
+        i=0;/*reseting i after cheking if it label or not*/
+    }
     /*first word will be label or not but it will be saved in firstWord*/
     if(isNextWordLabel(line,firstWord,&i)){
         
@@ -45,17 +70,33 @@ bool fpassLine(cur_line line,long *ic,long *dc){
                 printf("Rules: 1-31 chars, starts with letter, not a reserved word\n");
                 return FALSE;
         }
-        /*getting word after */
-        getNextWord(line,nexWord,&i);
+        if(getSymbol(firstWord)!=NULL){
+            printf("%s.as:%ld: error: label '%s' is already declared.\n",line.fileName,line.num,firstWord);
+            return FALSE;
+        }
+       
 
-        if(!isReservedWord(nexWord)){
-            printf("%s.as:%ld: error: invalid comand '%s'\n",line.fileName,line.num,nexWord);
+        if(isEmptyStr(line.code,i)){
+            strcpy(savedLabelName,firstWord);
+            isLabelBefore = TRUE;
+            return TRUE;
+        }
+
+        /*getting word after */
+        getNextWord(line,nextWord,&i);
+        
+        /*need to be reserved word but not register*/
+        if(!isReservedWord(nextWord)){
+            printf("%s.as:%ld: error: invalid command '%s'\n",line.fileName,line.num,nextWord);
+            return FALSE;
+        }else if(getRegisterNum(nextWord)!=-1){
+            printf("%s.as:%ld: error: invalid command '%s'\n",line.fileName,line.num,nextWord);
             return FALSE;
         }
 
         /*getting now info about comman from second word*/
-        getDirectiveByName(nexWord,&directive,&size);
-        getFuncOp(nexWord,&funct,&opcode);
+        getDirectiveByName(nextWord,&directive,&size);
+        getFuncOp(nextWord,&funct,&opcode);
         if(directive != NONE_DIR){
             saveSymbols(firstWord,TRUE,*dc);
         }else if(opcode != NONE_OP){
@@ -63,12 +104,15 @@ bool fpassLine(cur_line line,long *ic,long *dc){
         }
 
         /*after we saved label we need to move first word to second one (command)*/
-        strcpy(firstWord,nexWord);
+        strcpy(firstWord,nextWord);
     }
     
-
+    /*need to be reserved word but not register*/
     if(!isReservedWord(firstWord)){
-        printf("%s.as:%ld: error: invalid comand '%s'\n",line.fileName,line.num,firstWord);
+        printf("%s.as:%ld: error: invalid command '%s'\n",line.fileName,line.num,firstWord);
+        return FALSE;
+    }else if(getRegisterNum(firstWord)!=-1){
+        printf("%s.as:%ld: error: invalid command '%s'\n",line.fileName,line.num,firstWord);
         return FALSE;
     }
     /*getting now info about command from first word*/
@@ -89,8 +133,8 @@ bool fpassLine(cur_line line,long *ic,long *dc){
 
 
         /*get first param*/
-        getNextWord(line,nexWord,&i);
-        fParam = getRegisterNum(nexWord);
+        getNextWord(line,nextWord,&i);
+        fParam = getRegisterNum(nextWord);
 
         /*J instructions only 1 param*/
         if(opcode >=30){
@@ -107,29 +151,34 @@ bool fpassLine(cur_line line,long *ic,long *dc){
             /*any jump with no register*/
             else{
                 if(isTextAfterCommand(line,&i,firstWord))return FALSE;
+                if(!isValidLabel(nextWord)){
+                    printf("%s.as:%ld: error: invalid label '%s'. ",line.fileName,line.num,nextWord);
+                    printf("Rules: 1-31 chars, starts with letter, not a reserved word\n");
+                    return FALSE;
+                }
 
-                saveJTypeInst(opcode,FALSE,nexWord,0,*ic);
+                saveJTypeInst(opcode,FALSE,nextWord,0,*ic);
                 *ic+=4;
                 return TRUE;
             }
         }
         /*every command after this stage need to be minimum with 2 params and first is register*/
-        if(!isCommaNext(line,&i,firstWord,nexWord))return FALSE;
+        if(!isCommaNext(line,&i,firstWord,nextWord))return FALSE;
         if(fParam == -1){
-            printf("%s.as:%ld: error: argument %s is not register as aspected.\n",line.fileName,line.num,nexWord);
+            printf("%s.as:%ld: error: argument %s is not register as aspected.\n",line.fileName,line.num,nextWord);
             return FALSE;
         }
 
         /*get second param*/
-        getNextWord(line,nexWord,&i);
-        sParam = getRegisterNum(nexWord);
+        getNextWord(line,nextWord,&i);
+        sParam = getRegisterNum(nextWord);
         
         
         /*instruction with 2 params*/
         if(opcode == MOVE_OP){
             /*second argument might be register and no text after*/
             if(sParam == -1){
-                printf("%s.as:%ld: error: argument %s is not register as aspected.\n",line.fileName,line.num,nexWord);
+                printf("%s.as:%ld: error: argument %s is not register as aspected.\n",line.fileName,line.num,nextWord);
                 return FALSE;
             }
             if(isTextAfterCommand(line,&i,firstWord))return FALSE;
@@ -140,26 +189,26 @@ bool fpassLine(cur_line line,long *ic,long *dc){
         }
 
         /*every command after this stage need to be minimum with 3 params*/
-        if(!isCommaNext(line,&i,firstWord,nexWord))return FALSE;
+        if(!isCommaNext(line,&i,firstWord,nextWord))return FALSE;
         /*is first 2 need to be registers*/
         if(sParam == -1 && (opcode == ADD_OP || (opcode >=15 && opcode <= 18))){
-                printf("%s.as:%ld: error: argument %s is not register as aspected.\n",line.fileName,line.num,nexWord);
+                printf("%s.as:%ld: error: argument %s is not register as aspected.\n",line.fileName,line.num,nextWord);
                 return FALSE;
             }
         /*second param might be integer 2-byte size*/
         if((opcode >= 10 && opcode <= 14) || (opcode >= 19 && opcode <= 24)){
-            immed = strtol(nexWord,NULL,10);
-            if(!is_int(nexWord)){
-                printf("%s.as:%ld: error: %s argument might be integer.\n",line.fileName,line.num,nexWord);
+            immed = strtol(nextWord,NULL,10);
+            if(!is_int(nextWord)){
+                printf("%s.as:%ld: error: %s argument might be integer.\n",line.fileName,line.num,nextWord);
                 return FALSE;
             }else if(!checkRange(immed,2)){
-                printf("%s.as:%ld: error: value %s is out of range for 2-byte integer.\n",line.fileName,line.num,nexWord);
+                printf("%s.as:%ld: error: value %s is out of range for 2-byte integer.\n",line.fileName,line.num,nextWord);
                 return FALSE;
             }
         }
         /*get third param*/
-        getNextWord(line,nexWord,&i);
-        tParam = getRegisterNum(nexWord);
+        getNextWord(line,nextWord,&i);
+        tParam = getRegisterNum(nextWord);
 
 
         /*instructions with 3 params and first 2 is registers*/
@@ -168,7 +217,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
             if(opcode == ADD_OP){
                 /*for this command 3rd param also register*/
                 if(tParam == -1){
-                    printf("%s.as:%ld: error: argument %s is not register as aspected.\n",line.fileName,line.num,nexWord);
+                    printf("%s.as:%ld: error: argument %s is not register as aspected.\n",line.fileName,line.num,nextWord);
                     return FALSE;
                 }
                 if(isTextAfterCommand(line,&i,firstWord))return FALSE;
@@ -177,18 +226,18 @@ bool fpassLine(cur_line line,long *ic,long *dc){
                 return TRUE;
             }else{
                 /*third param need to bee label and not reserved word*/
-                if(isReservedWord(nexWord)){
-                    printf("%s.as:%ld: error: argument %s is reserved word.\n",line.fileName,line.num,nexWord);
+                if(isReservedWord(nextWord)){
+                    printf("%s.as:%ld: error: argument %s is reserved word.\n",line.fileName,line.num,nextWord);
                     return FALSE;
                 }
-                if(!isValidLabel(nexWord)){
-                printf("%s.as:%ld: error: invalid label '%s'. \n",line.fileName,line.num,firstWord);
-                printf("Rules: 1-31 chars, starts with letter, not a reserved word\n");
-                return FALSE;
+                if(!isValidLabel(nextWord)){
+                    printf("%s.as:%ld: error: invalid label '%s'.",line.fileName,line.num,nextWord);
+                    printf("Rules: 1-31 chars, starts with letter, not a reserved word\n");
+                    return FALSE;
                 }
                 if(isTextAfterCommand(line,&i,firstWord))return FALSE;
 
-                saveITypeInst(opcode,TRUE,nexWord,fParam,sParam,0,*ic);
+                saveITypeInst(opcode,TRUE,nextWord,fParam,sParam,0,*ic);
                 *ic+=4;
                 return TRUE;
             }
@@ -198,7 +247,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
 
             
             if(tParam == -1){
-                printf("%s.as:%ld: error: register '%s' is no valid might be $0-31\n",line.fileName,line.num,nexWord);
+                printf("%s.as:%ld: error: register '%s' is no valid might be $0-31\n",line.fileName,line.num,nextWord);
                 return FALSE;
             }
             
@@ -218,15 +267,17 @@ bool fpassLine(cur_line line,long *ic,long *dc){
     if(directive >= DH_DIR && directive <= ASCIZ_DIR){
         while(!isEmptyStr(line.code,i)){
             /*get word*/
-            getNextWord(line,nexWord,&i);
+            getNextWord(line,nextWord,&i);
             skipSpaces(line.code,&i);
             /*saving and adding dc*/
-            if(!saveDataCode(nexWord,directive,size,dc,line)) return FALSE;
+            if(!saveDataCode(nextWord,directive,size,dc,line)) return FALSE;
             /*check if end of line*/
             if(isEmptyStr(line.code,i))return TRUE;
             /*if not end of line check if has comma*/
-            if(!isCommaNext(line,&i,firstWord,nexWord))return FALSE;
+            if(!isCommaNext(line,&i,firstWord,nextWord))return FALSE;
         }
     }
+
+    
     return TRUE;
 }
