@@ -7,6 +7,7 @@
 #include "utils.h"
 #include "code.h"
 #include "process_tables.h"
+#include "macro_table.h"
 
 bool isLabelBefore = FALSE;
 char savedLabelName[MAX_LINE_LENGTH+2];
@@ -79,6 +80,10 @@ bool fpassLine(cur_line line,long *ic,long *dc){
             printf("and cannot be defined locally.\n");
             return FALSE;
         }
+        if(isMacroExist(firstWord)){
+            printf("%s.as:%ld: error: label %s conflicts with an existing macro name.\n",line.fileName,line.num,firstWord);
+            return FALSE;
+        }
        
 
         if(isEmptyStr(line.code,i)){
@@ -136,7 +141,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
         if(opcode == HLT_OP){
             /*check extra text*/
             if(isTextAfterCommand(line,&i,firstWord))return FALSE;
-            saveJTypeInst(opcode,0,NULL,0,*ic);
+            saveJTypeInst(opcode,0,NULL,0,*ic,line.num);
             *ic+=4;
             return TRUE;
         }
@@ -156,7 +161,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
             if(opcode == JMP_OP && fParam != -1){
                 if(isTextAfterCommand(line,&i,firstWord))return FALSE;
                 /*save*/
-                saveJTypeInst(opcode,TRUE,NULL,fParam,*ic);
+                saveJTypeInst(opcode,TRUE,NULL,fParam,*ic,line.num);
                 *ic+=4;
                 return TRUE;
             }
@@ -170,7 +175,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
                     return FALSE;
                 }
 
-                saveJTypeInst(opcode,FALSE,nextWord,0,*ic);
+                saveJTypeInst(opcode,FALSE,nextWord,0,*ic,line.num);
                 *ic+=4;
                 return TRUE;
             }
@@ -250,7 +255,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
                 }
                 if(isTextAfterCommand(line,&i,firstWord))return FALSE;
 
-                saveITypeInst(opcode,TRUE,nextWord,fParam,sParam,0,*ic);
+                saveITypeInst(opcode,TRUE,nextWord,fParam,sParam,0,*ic,line.num);
                 *ic+=4;
                 return TRUE;
             }
@@ -270,7 +275,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
                 printf("%s.as:%ld: error: extra text after command %s\n",line.fileName,line.num,firstWord);
                 return FALSE;
             }
-            saveITypeInst(opcode,FALSE,NULL,fParam,tParam,immed,*ic);
+            saveITypeInst(opcode,FALSE,NULL,fParam,tParam,immed,*ic,line.num);
             *ic+=4;
             return TRUE;
         }
