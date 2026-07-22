@@ -7,19 +7,17 @@
 #include "limits.h"
 
 
-/*global tables*/
+/*global table*/
 symbolTable symbolHead;
-codeImageTable codeHead;
-codeExternTable externHead;
 
-long arrCounter = 100;/*cheack in func if dc == arrCounter realoc dataImg  +100*/
-unsigned char *dataImg; /*1 byte per cell*/
+
+long arrCounter = CODE_SINGLE_BLOCK;/*cheack in func if dc == arrCounter realoc dataImg  +100*/
 
 /*halper functions */
-void saveByte(unsigned int value, long *dc);
+void saveByte(unsigned char *dataImg,unsigned int value, long *dc);
 bool checkRange(long value, unsigned int bytes);
-void saveNumber(long value, directive dir, long *dc);
-void saveInstructionCode(unsigned int machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI);
+void saveNumber(unsigned char *dataImg,long value, directive dir, long *dc);
+void saveInstructionCode(codeImageTable *codeHead,unsigned int machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI);
 symbol *createSymbol(long address,char *name, bool isData );
 
 
@@ -64,8 +62,8 @@ symbolTable getSymbol(char *name){
     }
 }
 
-bool isExternExist(char *name){
-    codeExternTable current = externHead;
+bool isExternExist(codeExternTable *externHead,char *name){
+    codeExternTable current = *externHead;
     if(current == NULL){
         return FALSE;
     }
@@ -77,12 +75,12 @@ bool isExternExist(char *name){
 
 
 
-void saveExtern(char *name){
-    codeExternTable current = externHead;
+void saveExtern(codeExternTable *externHead,char *name){
+    codeExternTable current = *externHead;
     codeExternTable newExtern;
 
     /*page 41*/
-    if(isExternExist(name)){
+    if(isExternExist(externHead,name)){
         return;
     }
     
@@ -91,8 +89,8 @@ void saveExtern(char *name){
     strcpy(newExtern->label,name);
     newExtern->next = NULL;
 
-    if(externHead == NULL){
-        externHead = newExtern;
+    if(*externHead == NULL){
+        *externHead = newExtern;
         return;
     }
 
@@ -100,6 +98,28 @@ void saveExtern(char *name){
         current = current->next;
     }
     current->next = newExtern;
+}
+
+void saveEntry(codeEntryTable *entryHead,char *label){
+    codeEntryTable current = *entryHead;
+    codeEntryTable newEntry;
+
+    
+    
+    newEntry = mallocWithCheck(sizeof(*newEntry));
+    newEntry->label = mallocWithCheck(strlen(label));
+    strcpy(newEntry->label,label);
+    newEntry->next = NULL;
+
+    if(*entryHead == NULL){
+        *entryHead = newEntry;
+        return;
+    }
+
+    while(current->next !=NULL){
+        current = current->next;
+    }
+    current->next = newEntry;
 }
 
 /*saving symbol to Table NOT CHECKING IF LABEL EXIST*/
@@ -133,51 +153,53 @@ void saveSymbols(char *name,bool isData,long address){
 }
 
 
-void saveJTypeInst(opcode opcode,bool isReg,char *label,unsigned char reg,long IC,long lineNum){
+void saveJTypeInst(codeImageTable *codeHead,opcode opcode,bool isReg,char *label,unsigned char reg,long IC,long lineNum){
     unsigned int machineCode = 0;
     if(isReg){
         machineCode = ((opcode & 0x3f) << 26) | (1 << 25) | reg;
-        saveInstructionCode(machineCode,FALSE,NULL,IC,0,FALSE);
+        saveInstructionCode(codeHead,machineCode,FALSE,NULL,IC,0,FALSE);
     }else{
         machineCode = ((opcode & 0x3f) << 26);
         /*saving line num to tell in second pass were label that undeclarated*/
-        saveInstructionCode(machineCode,TRUE,label,IC,lineNum,FALSE);
+        saveInstructionCode(codeHead,machineCode,TRUE,label,IC,lineNum,FALSE);
     }
 }
 
-void saveITypeInst(opcode opcode,bool isLabel,char *label,unsigned char rs,unsigned char rt,unsigned short immed,long IC,long lineNum){
+void saveITypeInst(codeImageTable *codeHead,opcode opcode,bool isLabel,char *label,unsigned char rs,unsigned char rt,unsigned short immed,long IC,long lineNum){
     unsigned int machineCode = ((opcode & 0x3f) << 26) |
                                ((rs & 0x1f) << 21) |
                                ((rt & 0x1f) << 16);
     
     if(!isLabel){   
         machineCode = machineCode | immed; /*<- immed 16 bit in 1st 16 bits*/
-        saveInstructionCode(machineCode,FALSE,NULL,IC,0,TRUE);
+        saveInstructionCode(codeHead,machineCode,FALSE,NULL,IC,0,TRUE);
     }else{
         /*saving line num to tell in second pass were label that undeclarated*/
-        saveInstructionCode(machineCode,TRUE,label,IC,lineNum,TRUE);
+        saveInstructionCode(codeHead,machineCode,TRUE,label,IC,lineNum,TRUE);
     }
         
 
 }
 
-void saveRTypeInst(opcode opcode,unsigned char rs,
+void saveRTypeInst(codeImageTable *codeHead,opcode opcode,unsigned char rs,
                             unsigned char rt,unsigned char rd,unsigned char funct,long IC)
 {
     unsigned int machineCode = 0;
+    printf("opcode=%d rs=%d rt=%d rd=%d funct=%d\n",
+       opcode, rs, rt, rd, funct);
     if(opcode == 0){
         machineCode = ((opcode & 0x3f) << 26) |
                       ((rs & 0x1f) << 21) |
                       ((rt & 0x1f) << 16) |
                       ((rd & 0x1f) << 11) |
                       ((funct & 0x1f) << 6);
-        saveInstructionCode(machineCode,FALSE,NULL,IC,0,FALSE);
+        saveInstructionCode(codeHead,machineCode,FALSE,NULL,IC,0,FALSE);
     }
 }
 
 
 
-bool saveDataCode(char *valueToSave,directive dir, int size,long *dc,cur_line line){
+bool saveDataCode(unsigned char *dataImg,char *valueToSave,directive dir, int size,long *dc,cur_line line){
 
     long value;
     int i;
@@ -200,7 +222,7 @@ bool saveDataCode(char *valueToSave,directive dir, int size,long *dc,cur_line li
 
             if((*dc) + strlen(valueToSave) >= arrCounter){
                 while((*dc) + strlen(valueToSave) >= arrCounter){
-                    arrCounter += 100;
+                    arrCounter += CODE_SINGLE_BLOCK;
                 }
                 dataImg = reallocWithCheck(dataImg,arrCounter);
             }
@@ -209,10 +231,10 @@ bool saveDataCode(char *valueToSave,directive dir, int size,long *dc,cur_line li
         i = 1;
         while (i<MAX_LINE_LENGTH&& valueToSave[i] &&valueToSave[i]!='"' &&valueToSave[i]!='\0')
         {
-            saveByte(valueToSave[i],dc);
+            saveByte(dataImg,valueToSave[i],dc);
             i++;
         }
-        saveByte('\0', dc);
+        saveByte(dataImg,'\0', dc);
     }else if(dir == DB_DIR || dir == DH_DIR || dir == DW_DIR){
 
         /*page 23 2^25 max size*/
@@ -222,7 +244,7 @@ bool saveDataCode(char *valueToSave,directive dir, int size,long *dc,cur_line li
         }
         if((*dc) + size >= arrCounter){
             while((*dc) + size >= arrCounter){
-                arrCounter += 100;
+                arrCounter += CODE_SINGLE_BLOCK;
             }
             dataImg = reallocWithCheck(dataImg,arrCounter);   
         }
@@ -239,7 +261,7 @@ bool saveDataCode(char *valueToSave,directive dir, int size,long *dc,cur_line li
             return FALSE;
         }
 
-        saveNumber(value,dir,dc);
+        saveNumber(dataImg,value,dir,dc);
     } 
     return TRUE;
 }
@@ -297,9 +319,8 @@ symbol *createSymbol(long address,char *name, bool isData ){
 
 
 
-void saveInstructionCode(unsigned int machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI){
-    codeImageTable current = codeHead;
-
+void saveInstructionCode(codeImageTable *codeHead,unsigned int machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI){
+    codeImageTable current = *codeHead;
     codeImageTable newLine = mallocWithCheck(sizeof(*newLine));
     newLine->hasLabel = withLabel;
     if(label){
@@ -315,11 +336,10 @@ void saveInstructionCode(unsigned int machineCode,bool withLabel,char *label,lon
     newLine->next = NULL;
 
     /*no codeLines before*/
-    if(current == NULL){
-        codeHead = newLine;
+    if(*codeHead == NULL){
+        *codeHead = newLine;
         return;
     }
-
     /*sorting by IC*/
     while (current->next != NULL && current->next->IC < newLine->IC)
     {
@@ -361,27 +381,27 @@ bool checkRange(long value, unsigned int bytes)
 }
 
 
-void saveNumber(long value, directive dir, long *dc)
+void saveNumber(unsigned char *dataImg,long value, directive dir, long *dc)
 {
     /*need to be little endian page 23*/
     switch(dir)
     {
         case DB_DIR:
-            saveByte(value, dc);
+            saveByte(dataImg,value, dc);
             break;
 
 
         case DH_DIR:
-            saveByte(value, dc);
-            saveByte(value >> 8, dc);
+            saveByte(dataImg,value, dc);
+            saveByte(dataImg,value >> 8, dc);
             break;
 
 
         case DW_DIR:
-            saveByte(value, dc);
-            saveByte(value >> 8, dc);
-            saveByte(value >> 16, dc);
-            saveByte(value >> 24, dc);
+            saveByte(dataImg,value, dc);
+            saveByte(dataImg,value >> 8, dc);
+            saveByte(dataImg,value >> 16, dc);
+            saveByte(dataImg,value >> 24, dc);
             break;
         default:
             break;
@@ -390,7 +410,7 @@ void saveNumber(long value, directive dir, long *dc)
 
 
 
-void saveByte(unsigned int value, long *dc)
+void saveByte(unsigned char *dataImg,unsigned int value, long *dc)
 {
     dataImg[(*dc)++] = value & 0xff;
 }

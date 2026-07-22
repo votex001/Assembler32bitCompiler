@@ -12,7 +12,7 @@ FILE *writeFile(const char *fileName, const char *ext){
     fileWithExt = mallocWithCheck((strlen(fileName) + strlen(ext)) + 1);
 
     if(fileWithExt == NULL){
-        printf("Can't create or rewrite to file %s.",fileWithExt);
+        printf("Can't create or rewrite to file %s, skip file.\n",fileWithExt);
         return NULL;
     }
 
@@ -29,7 +29,7 @@ FILE *readFile(const char *fileName, const char *ext){
     fileWithExt = mallocWithCheck((strlen(fileName) + strlen(ext)) + 1);
 
     if(fileWithExt == NULL){
-        printf("Can't read file %s.",fileWithExt);
+        printf("Error: cant open %s, skip file.\n",fileWithExt);
         return NULL;
     }
 

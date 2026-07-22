@@ -14,7 +14,9 @@ char savedLabelName[MAX_LINE_LENGTH+2];
 
 
 
-bool fpassLine(cur_line line,long *ic,long *dc){
+bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
+            codeExternTable *externHead,unsigned char *dataImg,codeEntryTable *entryHead){
+
     int i = 0;/*char 0 in line*/
     char firstWord[MAX_LINE_LENGTH + 2];
     char nextWord[MAX_LINE_LENGTH + 2];
@@ -75,7 +77,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
             printf("%s.as:%ld: error: label '%s' is already declared.\n",line.fileName,line.num,firstWord);
             return FALSE;
         }
-        if(isExternExist(firstWord)){
+        if(isExternExist(externHead,firstWord)){
             printf("%s.as:%ld: error: external label '%s' is already declared ",line.fileName, line.num, firstWord);
             printf("and cannot be defined locally.\n");
             return FALSE;
@@ -141,7 +143,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
         if(opcode == HLT_OP){
             /*check extra text*/
             if(isTextAfterCommand(line,&i,firstWord))return FALSE;
-            saveJTypeInst(opcode,0,NULL,0,*ic,line.num);
+            saveJTypeInst(codeHead,opcode,0,NULL,0,*ic,line.num);
             *ic+=4;
             return TRUE;
         }
@@ -161,7 +163,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
             if(opcode == JMP_OP && fParam != -1){
                 if(isTextAfterCommand(line,&i,firstWord))return FALSE;
                 /*save*/
-                saveJTypeInst(opcode,TRUE,NULL,fParam,*ic,line.num);
+                saveJTypeInst(codeHead,opcode,TRUE,NULL,fParam,*ic,line.num);
                 *ic+=4;
                 return TRUE;
             }
@@ -175,7 +177,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
                     return FALSE;
                 }
 
-                saveJTypeInst(opcode,FALSE,nextWord,0,*ic,line.num);
+                saveJTypeInst(codeHead,opcode,FALSE,nextWord,0,*ic,line.num);
                 *ic+=4;
                 return TRUE;
             }
@@ -200,8 +202,8 @@ bool fpassLine(cur_line line,long *ic,long *dc){
                 return FALSE;
             }
             if(isTextAfterCommand(line,&i,firstWord))return FALSE;
-
-            saveRTypeInst(opcode,fParam,0,sParam,funct,*ic);
+            printf("move: $%d, $%d\n",fParam,sParam);
+            saveRTypeInst(codeHead,opcode,fParam,0,sParam,funct,*ic);
             *ic+=4;
             return TRUE;
         }
@@ -239,7 +241,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
                     return FALSE;
                 }
                 if(isTextAfterCommand(line,&i,firstWord))return FALSE;
-                saveRTypeInst(opcode,fParam,sParam,tParam,funct,*ic);
+                saveRTypeInst(codeHead,opcode,fParam,sParam,tParam,funct,*ic);
                 *ic+=4;
                 return TRUE;
             }else{
@@ -255,7 +257,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
                 }
                 if(isTextAfterCommand(line,&i,firstWord))return FALSE;
 
-                saveITypeInst(opcode,TRUE,nextWord,fParam,sParam,0,*ic,line.num);
+                saveITypeInst(codeHead,opcode,TRUE,nextWord,fParam,sParam,0,*ic,line.num);
                 *ic+=4;
                 return TRUE;
             }
@@ -275,7 +277,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
                 printf("%s.as:%ld: error: extra text after command %s\n",line.fileName,line.num,firstWord);
                 return FALSE;
             }
-            saveITypeInst(opcode,FALSE,NULL,fParam,tParam,immed,*ic,line.num);
+            saveITypeInst(codeHead,opcode,FALSE,NULL,fParam,tParam,immed,*ic,line.num);
             *ic+=4;
             return TRUE;
         }
@@ -288,7 +290,7 @@ bool fpassLine(cur_line line,long *ic,long *dc){
             getNextWord(line,nextWord,&i);
             skipSpaces(line.code,&i);
             /*saving and adding dc*/
-            if(!saveDataCode(nextWord,directive,size,dc,line)) return FALSE;
+            if(!saveDataCode(dataImg,nextWord,directive,size,dc,line)) return FALSE;
             /*check if end of line*/
             if(isEmptyStr(line.code,i))return TRUE;
             /*if not end of line check if has comma*/
@@ -308,7 +310,18 @@ bool fpassLine(cur_line line,long *ic,long *dc){
             printf("and cannot be declared as external.\n");
             return FALSE;
         }
-        saveExtern(nextWord);
+        saveExtern(externHead,nextWord);
+        return TRUE;
+    }
+
+    if(directive == ENTRY_DIR){
+        getNextWord(line,nextWord,&i);
+        if(!isValidLabel(nextWord)){
+                printf("%s.as:%ld: error: invalid label '%s'. ",line.fileName,line.num,nextWord);
+                printf("Rules: 1-31 chars, starts with letter, not a reserved word\n");
+                return FALSE;
+        }
+        saveEntry(entryHead,nextWord);
         return TRUE;
     }
 

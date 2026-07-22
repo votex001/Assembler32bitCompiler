@@ -8,6 +8,7 @@
 #include "macro_table.h"
 #include "process_tables.h"
 #include "original_file_table.h"
+#include "second_pass.h"
 
 
 
@@ -17,28 +18,36 @@ void processFiles(char *fullName){
     cur_line line;
     char temp_str[MAX_LINE_LENGTH + 2];
     bool isSuccess = TRUE;
+    codeImageTable codeHead = NULL;
+    codeExternTable externHead = NULL;
+    codeEntryTable entryHead = NULL;
+    unsigned char *dataImg = mallocWithCheck(CODE_SINGLE_BLOCK); /*1 byte per cell*/
     
- 
     FILE *amFile;
     line.code = temp_str;
     line.num = getLineNum(line.code);
     line.fileName = cutStr(fullName,".as");
     amFile = readFile(line.fileName,".am");
+    
     if(amFile == NULL){
-        printf("Error: cant open %s.am, skip file.",line.fileName);
         return;
     }
     /*goes line by line*/
     while(fgets(temp_str,MAX_LINE_LENGTH+2,amFile)!=NULL){
         line.num = getLineNum(line.code);
-        if(!fpassLine(line,&ic,&dc)){
+        if(!fPassLine(line,&ic,&dc,&codeHead,&externHead,dataImg,&entryHead)){
             isSuccess = FALSE;
         }
     }
     if(isSuccess){
-        printf("IC: %ld, DC: %ld\n",ic,dc);
+         if(sPassLine(line.fileName,&ic,&dc,&codeHead,externHead,entryHead,dataImg)){
+            printf("SUCCESS\n");
+         }
     }
     deleteMacroTable();
-    free(line.fileName);
     fclose(amFile);
+    if(!isSuccess){
+        deleteFile(line.fileName,".am");
+    }
+    free(line.fileName);
 }

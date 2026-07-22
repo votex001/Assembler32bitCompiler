@@ -3,9 +3,12 @@
 
 #include <stdio.h>
 #include "global.h"
+#include "process_tables.h"
 
 
-bool fpassLine(cur_line line,long *ic,long *dc);
+
+bool fPassLine(cur_line line,long *ic,long *dc,
+    codeImageTable *codeHead,codeExternTable *externHead,unsigned char *dataImg,codeEntryTable *entryHead);
 
 
 #endif
