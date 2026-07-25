@@ -50,9 +50,9 @@ void saveRTypeInst(codeImageTable *codeHead,opcode opcode,unsigned char rs,unsig
 bool saveDataCode(unsigned char *dataImg,char *valueToSave,directive dir, int size,long *dc,cur_line line);
 bool checkRange(long value, unsigned int bytes);
 symbolTable getSymbol(char *name);
-void saveExtern(codeExternTable *externHead,char *name);
+void saveExtern(char *name);
 void saveEntry(codeEntryTable *entryHead,char *label);
-bool isExternExist(codeExternTable *externHead,char *name);
+bool isExternExist(char *name);
 
 
 

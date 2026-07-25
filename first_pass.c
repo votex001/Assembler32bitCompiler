@@ -15,7 +15,7 @@ char savedLabelName[MAX_LINE_LENGTH+2];
 
 
 bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
-            codeExternTable *externHead,unsigned char *dataImg,codeEntryTable *entryHead){
+            unsigned char *dataImg,codeEntryTable *entryHead){
 
     int i = 0;/*char 0 in line*/
     char firstWord[MAX_LINE_LENGTH + 2];
@@ -77,7 +77,7 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
             printf("%s.as:%ld: error: label '%s' is already declared.\n",line.fileName,line.num,firstWord);
             return FALSE;
         }
-        if(isExternExist(externHead,firstWord)){
+        if(isExternExist(firstWord)){
             printf("%s.as:%ld: error: external label '%s' is already declared ",line.fileName, line.num, firstWord);
             printf("and cannot be defined locally.\n");
             return FALSE;
@@ -310,7 +310,7 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
             printf("and cannot be declared as external.\n");
             return FALSE;
         }
-        saveExtern(externHead,nextWord);
+        saveExtern(nextWord);
         return TRUE;
     }
 

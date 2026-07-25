@@ -8,7 +8,7 @@
 
 
 bool fPassLine(cur_line line,long *ic,long *dc,
-    codeImageTable *codeHead,codeExternTable *externHead,unsigned char *dataImg,codeEntryTable *entryHead);
+    codeImageTable *codeHead,unsigned char *dataImg,codeEntryTable *entryHead);
 
 
 #endif

@@ -5,7 +5,7 @@
 
 
 bool sPassLine(char *fileName,long *ic,long *dc,codeImageTable *codeHead,
-                                                    codeExternTable externHead,codeEntryTable entryHead,unsigned char *dataImg){
+                                                    codeEntryTable entryHead,unsigned char *dataImg){
     
     bool isSuccess = TRUE;
     FILE *obFile,*extFile,*entFile;

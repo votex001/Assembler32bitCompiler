@@ -19,7 +19,7 @@ void processFiles(char *fullName){
     char temp_str[MAX_LINE_LENGTH + 2];
     bool isSuccess = TRUE;
     codeImageTable codeHead = NULL;
-    codeExternTable externHead = NULL;
+    
     codeEntryTable entryHead = NULL;
     unsigned char *dataImg = mallocWithCheck(CODE_SINGLE_BLOCK); /*1 byte per cell*/
     
@@ -35,12 +35,12 @@ void processFiles(char *fullName){
     /*goes line by line*/
     while(fgets(temp_str,MAX_LINE_LENGTH+2,amFile)!=NULL){
         line.num = getLineNum(line.code);
-        if(!fPassLine(line,&ic,&dc,&codeHead,&externHead,dataImg,&entryHead)){
+        if(!fPassLine(line,&ic,&dc,&codeHead,dataImg,&entryHead)){
             isSuccess = FALSE;
         }
     }
     if(isSuccess){
-         if(sPassLine(line.fileName,&ic,&dc,&codeHead,externHead,entryHead,dataImg)){
+         if(sPassLine(line.fileName,&ic,&dc,&codeHead,entryHead,dataImg)){
             printf("SUCCESS\n");
          }
     }

@@ -9,6 +9,7 @@
 
 /*global table*/
 symbolTable symbolHead;
+codeExternTable externHead;
 
 
 long arrCounter = CODE_SINGLE_BLOCK;/*cheack in func if dc == arrCounter realoc dataImg  +100*/
@@ -62,8 +63,8 @@ symbolTable getSymbol(char *name){
     }
 }
 
-bool isExternExist(codeExternTable *externHead,char *name){
-    codeExternTable current = *externHead;
+bool isExternExist(char *name){
+    codeExternTable current = externHead;
     if(current == NULL){
         return FALSE;
     }
@@ -75,12 +76,12 @@ bool isExternExist(codeExternTable *externHead,char *name){
 
 
 
-void saveExtern(codeExternTable *externHead,char *name){
-    codeExternTable current = *externHead;
+void saveExtern(char *name){
+    codeExternTable current = externHead;
     codeExternTable newExtern;
 
     /*page 41*/
-    if(isExternExist(externHead,name)){
+    if(isExternExist(name)){
         return;
     }
     
@@ -89,8 +90,8 @@ void saveExtern(codeExternTable *externHead,char *name){
     strcpy(newExtern->label,name);
     newExtern->next = NULL;
 
-    if(*externHead == NULL){
-        *externHead = newExtern;
+    if(externHead == NULL){
+        externHead = newExtern;
         return;
     }
 
