@@ -143,7 +143,7 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
         if(opcode == HLT_OP){
             /*check extra text*/
             if(isTextAfterCommand(line,&i,firstWord))return FALSE;
-            saveJTypeInst(codeHead,opcode,0,NULL,0,*ic,line.num);
+            saveJTypeInst(codeHead,opcode,FALSE,NULL,0,*ic,line.num);
             *ic+=4;
             return TRUE;
         }
@@ -202,7 +202,6 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
                 return FALSE;
             }
             if(isTextAfterCommand(line,&i,firstWord))return FALSE;
-            printf("move: $%d, $%d\n",fParam,sParam);
             saveRTypeInst(codeHead,opcode,fParam,0,sParam,funct,*ic);
             *ic+=4;
             return TRUE;

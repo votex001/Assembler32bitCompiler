@@ -40,27 +40,16 @@ symbol *createSymbol(long address,char *name, bool isData );
 
 
 symbolTable getSymbol(char *name){
-    symbolTable newExtern;
     symbolTable current = symbolHead;
 
-    if(current == NULL){
-        return NULL;
-    }
-
-    while(current->next != NULL && strcmp(current->name,name) != 0){
+    while (current != NULL) {
+        if (strcmp(current->name, name) == 0) {
+            return current;
+        }
         current = current->next;
     }
 
-    if(strcmp(current->name,name) != 0){
-        return NULL;
-    }else{
-        newExtern = mallocWithCheck(sizeof(*newExtern));
-        newExtern->name = mallocWithCheck(strlen(name)+1);
-        strcpy(newExtern->name,current->name);
-        newExtern->address = current->address;
-        newExtern->next = NULL;
-        return newExtern;
-    }
+    return NULL;
 }
 
 bool isExternExist(char *name){
@@ -156,7 +145,11 @@ void saveSymbols(char *name,bool isData,long address){
 
 void saveJTypeInst(codeImageTable *codeHead,opcode opcode,bool isReg,char *label,unsigned char reg,long IC,long lineNum){
     unsigned int machineCode = 0;
-    if(isReg){
+    /*saving hlt separate because of with label false + is reg false*/
+    if(opcode == HLT_OP){
+        saveInstructionCode(codeHead,machineCode,FALSE,label,IC,lineNum,FALSE);
+    }
+    else if(isReg){
         machineCode = ((opcode & 0x3f) << 26) | (1 << 25) | reg;
         saveInstructionCode(codeHead,machineCode,FALSE,NULL,IC,0,FALSE);
     }else{
@@ -186,8 +179,6 @@ void saveRTypeInst(codeImageTable *codeHead,opcode opcode,unsigned char rs,
                             unsigned char rt,unsigned char rd,unsigned char funct,long IC)
 {
     unsigned int machineCode = 0;
-    printf("opcode=%d rs=%d rt=%d rd=%d funct=%d\n",
-       opcode, rs, rt, rd, funct);
     if(opcode == 0){
         machineCode = ((opcode & 0x3f) << 26) |
                       ((rs & 0x1f) << 21) |

@@ -10,7 +10,7 @@ bool sPassLine(char *fileName,long *ic,long *dc,codeImageTable *codeHead,
     bool isSuccess = TRUE;
     FILE *obFile,*extFile,*entFile;
     codeImageTable currentCodeLine = *codeHead;
-    symbolTable symbol;
+    symbolTable label;
     long lineCount = IC_INIT_VAL,iResult;
     
     obFile = writeFile(fileName,".ob");
@@ -28,22 +28,25 @@ bool sPassLine(char *fileName,long *ic,long *dc,codeImageTable *codeHead,
         while(currentCodeLine != NULL){
 
             if(currentCodeLine->hasLabel && currentCodeLine->isI){
-                symbol = getSymbol(currentCodeLine->label);
-                if(symbol==NULL){
+                label = getSymbol(currentCodeLine->label);
+                if(label==NULL){
                     printf("%s.as:%ld: error: undefined label '%s'\n",fileName,currentCodeLine->lineNum,currentCodeLine->label);
                     isSuccess = FALSE;
                     continue;
                 }
-                iResult = (symbol->address - currentCodeLine->IC);
+                iResult = (label->address - currentCodeLine->IC);
                 if(!checkRange(iResult,2)){
                     printf("%s.as:%ld: error: branch offset to label '%s' is out of range\n",fileName,currentCodeLine->lineNum,currentCodeLine->label);
                     isSuccess = FALSE;
                     continue;
                 }
                 currentCodeLine->machineCode = currentCodeLine->machineCode | (iResult & 0xFFFF);
-            }
-            if(currentCodeLine->hasLabel && !currentCodeLine->isI){
-                printf("%ld\n",lineCount);/**/
+            }/*has label but not I instruction*/
+            else if(currentCodeLine->hasLabel){
+                printf("label = %s ", currentCodeLine->label);
+                printf("line - %ld\n",currentCodeLine->lineNum);
+                label = getSymbol(currentCodeLine->label);
+               
             }
 
 
