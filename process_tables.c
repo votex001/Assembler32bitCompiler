@@ -22,28 +22,66 @@ void saveInstructionCode(codeImageTable *codeHead,unsigned int machineCode,bool 
 symbol *createSymbol(long address,char *name, bool isData );
 
 
+void freeSymbolTable(){
+    symbolTable next;
+     while (symbolHead != NULL)
+    {
+        next = symbolHead->next;
+        free(symbolHead->label);
+        free(symbolHead);
+        symbolHead = next;
+    }
 
-/*TODO: delete table of LABELS*/
-/*TODO: delete table of INST CODE*/
-/*TODO: delete table of DATA CODE*/
-/*TODO: delete table of extern*/
-/*TODO: delete table of externCall*/
-/*TODO: delete table of entry*/
-
-/*second pass*/
-
-/*TODO: get data */
-/*TODO: get instruction */
-/*TODO: get entry */
-/*TODO: getExternCall*/
-/*TODO: save entry */
+}
 
 
-symbolTable getSymbol(char *name){
+void freeExternTable(){
+    codeExternTable next;
+
+    while (externHead != NULL)
+    {
+        next = externHead->next;
+        free(externHead->label);
+        free(externHead);
+        externHead = next;
+    }
+}
+
+
+
+void freeCodeTable(codeImageTable codeHead){
+    codeImageTable next;
+
+    while (codeHead != NULL)
+    {
+        next = codeHead->next;
+        free(codeHead->label);
+        free(codeHead);
+        codeHead = next;
+    }
+    
+}
+
+
+void freeEntryTable(codeEntryTable entryHead){
+    codeEntryTable next;
+
+    while (entryHead != NULL)
+    {
+        next = entryHead->next;
+        free(entryHead->label);
+        free(entryHead);
+        entryHead = next;
+    }
+
+}
+
+
+symbolTable getLabel(char *name){
     symbolTable current = symbolHead;
 
     while (current != NULL) {
-        if (strcmp(current->name, name) == 0) {
+        if (strcmp(current->label, name) == 0) {
             return current;
         }
         current = current->next;
@@ -75,7 +113,7 @@ void saveExtern(char *name){
     }
     
     newExtern = mallocWithCheck(sizeof(*newExtern));
-    newExtern->label = mallocWithCheck(strlen(name));
+    newExtern->label = mallocWithCheck(strlen(name)+1);
     strcpy(newExtern->label,name);
     newExtern->next = NULL;
 
@@ -90,15 +128,16 @@ void saveExtern(char *name){
     current->next = newExtern;
 }
 
-void saveEntry(codeEntryTable *entryHead,char *label){
+void saveEntry(codeEntryTable *entryHead,char *label,long lineNum){
     codeEntryTable current = *entryHead;
     codeEntryTable newEntry;
 
     
     
     newEntry = mallocWithCheck(sizeof(*newEntry));
-    newEntry->label = mallocWithCheck(strlen(label));
+    newEntry->label = mallocWithCheck(strlen(label)+1);
     strcpy(newEntry->label,label);
+    newEntry->lineNum = lineNum;
     newEntry->next = NULL;
 
     if(*entryHead == NULL){
@@ -115,11 +154,15 @@ void saveEntry(codeEntryTable *entryHead,char *label){
 /*saving symbol to Table NOT CHECKING IF LABEL EXIST*/
 void saveSymbols(char *name,bool isData,long address){
     symbolTable current;
-    symbol *newSymbol = createSymbol(address,name,isData);
+    symbol *newSymbol = mallocWithCheck(sizeof(*newSymbol));
+    newSymbol->address = address;
+    newSymbol->label = mallocWithCheck(strlen(name) + 1);
+    newSymbol->isData = isData;
+    strcpy(newSymbol->label, name);
+    newSymbol->next = NULL;;
     
     /*we need to check if label exist separate from this func to return ERROR*/
 
-    
     /*1st half of list will be isData second instructions*/
     if(symbolHead == NULL || symbolHead->address > address){
         newSymbol->next = symbolHead;
@@ -147,6 +190,7 @@ void saveJTypeInst(codeImageTable *codeHead,opcode opcode,bool isReg,char *label
     unsigned int machineCode = 0;
     /*saving hlt separate because of with label false + is reg false*/
     if(opcode == HLT_OP){
+        machineCode = ((opcode & 0x3f) << 26);
         saveInstructionCode(codeHead,machineCode,FALSE,label,IC,lineNum,FALSE);
     }
     else if(isReg){
@@ -179,14 +223,13 @@ void saveRTypeInst(codeImageTable *codeHead,opcode opcode,unsigned char rs,
                             unsigned char rt,unsigned char rd,unsigned char funct,long IC)
 {
     unsigned int machineCode = 0;
-    if(opcode == 0){
         machineCode = ((opcode & 0x3f) << 26) |
                       ((rs & 0x1f) << 21) |
                       ((rt & 0x1f) << 16) |
                       ((rd & 0x1f) << 11) |
                       ((funct & 0x1f) << 6);
+        
         saveInstructionCode(codeHead,machineCode,FALSE,NULL,IC,0,FALSE);
-    }
 }
 
 
@@ -206,14 +249,14 @@ bool saveDataCode(unsigned char *dataImg,char *valueToSave,directive dir, int si
     if(dir == ASCIZ_DIR){
 
             /*page 23 2^25 max size*/
-            if (((*dc) + strlen(valueToSave)) >=(1 << 25))
+            if (((*dc) + strlen(valueToSave) + 1 ) >=(1 << 25))
             {
                 printf("Memory overflow\n");
                 exit(1);
             }
 
-            if((*dc) + strlen(valueToSave) >= arrCounter){
-                while((*dc) + strlen(valueToSave) >= arrCounter){
+            if((*dc) + strlen(valueToSave) + 1  >= arrCounter){
+                while((*dc) + strlen(valueToSave) + 1 >= arrCounter){
                     arrCounter += CODE_SINGLE_BLOCK;
                 }
                 dataImg = reallocWithCheck(dataImg,arrCounter);
@@ -271,7 +314,7 @@ bool isSymbolExist(char *name){
     }
 
     while(current != NULL){
-        if(strcmp(current->name,name) == 0){
+        if(strcmp(current->label,name) == 0){
             return TRUE;
         }
         current = current->next;
@@ -281,42 +324,12 @@ bool isSymbolExist(char *name){
     return FALSE;
 }
 
-singleCodeLine *createCodeLine(unsigned int machine_word,char *label,struct singleCodeLine *next){
-    singleCodeLine *newCodeLine = mallocWithCheck(sizeof(*newCodeLine));
-    newCodeLine->machineCode = machine_word;
-    if(label){
-        newCodeLine->label = mallocWithCheck(strlen(label)+1);
-        strcpy(newCodeLine->label,label);
-    }
-    else{
-        newCodeLine->label = NULL;
-    }
-    newCodeLine->next = NULL;
-
-    return newCodeLine;
-}
-
-symbol *createSymbol(long address,char *name, bool isData ){
-    symbol *newSymbol = mallocWithCheck(sizeof(*newSymbol));
-    newSymbol->address = address;
-    newSymbol->name = mallocWithCheck(strlen(name) + 1);
-    newSymbol->isData = isData;
-    strcpy(newSymbol->name, name);
-    newSymbol->next = NULL;
-
-    return newSymbol;
-}
-
-
-
-
-
 void saveInstructionCode(codeImageTable *codeHead,unsigned int machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI){
     codeImageTable current = *codeHead;
     codeImageTable newLine = mallocWithCheck(sizeof(*newLine));
     newLine->hasLabel = withLabel;
     if(label){
-        newLine->label = mallocWithCheck(strlen(label)+1);
+        newLine->label = mallocWithCheck(strlen(label) + 1);
         strcpy(newLine->label,label);
     }else{
         newLine->label = NULL;

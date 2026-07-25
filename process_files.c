@@ -14,21 +14,24 @@
 
 
 void processFiles(char *fullName){
-    long ic = IC_INIT_VAL,dc = 0;
-    cur_line line;
-    char temp_str[MAX_LINE_LENGTH + 2];
-    bool isSuccess = TRUE;
+
+    long ic = IC_INIT_VAL,dc = 0; /*init start value of ic and dc*/
+    cur_line line;/*line information*/
+    char temp_str[MAX_LINE_LENGTH + 2];/*to save line from .as*/
+    bool isSuccess = TRUE;/*to check errors*/
+
+    /*data heads*/
     codeImageTable codeHead = NULL;
-    
     codeEntryTable entryHead = NULL;
     unsigned char *dataImg = mallocWithCheck(CODE_SINGLE_BLOCK); /*1 byte per cell*/
     
+    /*work with files*/
     FILE *amFile;
     line.code = temp_str;
     line.num = getLineNum(line.code);
     line.fileName = cutStr(fullName,".as");
     amFile = readFile(line.fileName,".am");
-    
+    /*printing error int read file so we need just to exit*/
     if(amFile == NULL){
         return;
     }
@@ -40,8 +43,8 @@ void processFiles(char *fullName){
         }
     }
     if(isSuccess){
-         if(sPassLine(line.fileName,&ic,&dc,&codeHead,entryHead,dataImg)){
-            printf("SUCCESS\n");
+         if(!sPassLine(line.fileName,&ic,&dc,&codeHead,&entryHead,dataImg)){
+            isSuccess = FALSE;
          }
     }
     deleteMacroTable();
@@ -50,4 +53,10 @@ void processFiles(char *fullName){
         deleteFile(line.fileName,".am");
     }
     free(line.fileName);
+    free(dataImg);
+    freeSymbolTable();
+    freeExternTable();
+    freeEntryTable(entryHead);
+    freeCodeTable(codeHead);
+
 }

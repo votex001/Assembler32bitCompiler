@@ -73,7 +73,7 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
                 printf("Rules: 1-31 chars, starts with letter, not a reserved word\n");
                 return FALSE;
         }
-        if(getSymbol(firstWord)!=NULL){
+        if(getLabel(firstWord)!=NULL){
             printf("%s.as:%ld: error: label '%s' is already declared.\n",line.fileName,line.num,firstWord);
             return FALSE;
         }
@@ -197,6 +197,7 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
         /*instruction with 2 params*/
         if(opcode == MOVE_OP){
             /*second argument might be register and no text after*/
+            
             if(sParam == -1){
                 printf("%s.as:%ld: error: argument %s is not register as aspected.\n",line.fileName,line.num,nextWord);
                 return FALSE;
@@ -304,7 +305,7 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
                 printf("Rules: 1-31 chars, starts with letter, not a reserved word\n");
                 return FALSE;
         }
-        if(getSymbol(nextWord) != NULL){
+        if(getLabel(nextWord) != NULL){
             printf("%s.as:%ld: error: label '%s' is already declared",line.fileName, line.num, nextWord);
             printf("and cannot be declared as external.\n");
             return FALSE;
@@ -320,7 +321,7 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
                 printf("Rules: 1-31 chars, starts with letter, not a reserved word\n");
                 return FALSE;
         }
-        saveEntry(entryHead,nextWord);
+        saveEntry(entryHead,nextWord,line.num);
         return TRUE;
     }
 
