@@ -1,3 +1,6 @@
+
+
+
 ;file ps.as
 ;sample source code
 .entry NEXT

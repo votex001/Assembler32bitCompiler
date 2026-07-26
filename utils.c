@@ -6,7 +6,7 @@
 #include "global.h"
 #include "utils.h"
 #include "code.h"
-
+/*TODO: description*/
 
 void *mallocWithCheck(long size){
     void *ptr = malloc(size);

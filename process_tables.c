@@ -5,7 +5,7 @@
 #include "string.h"
 #include "stdlib.h"
 #include "limits.h"
-
+/*TODO: description*/
 
 /*global table*/
 symbolTable symbolHead;

@@ -11,39 +11,59 @@
 
 
 
-void getSecondWord(cur_line line,char *secondWord,int *i);
 
 
-/*if preproces is success we going to make .am and start process 1 and 2 else we skip file*/
-bool preprocessFile(FILE *file,char *fileName){
+
+/**
+ * Preprocesses file with .as extension.
+ * Opening all mcros and making .am file to pass one and two.
+ * @param fileName File name with extension.
+ * @return Success status.
+ */
+bool preprocessFile(char *fileName){
     bool is_success = TRUE;
     bool is_in_macro = FALSE,skip_current_macro = FALSE;
     char macro_name[MAX_LINE_LENGTH];
     char temp_str[MAX_LINE_LENGTH + 2];
-    
-    /*creating am file and sending it to expand macros func*/ 
     FILE *amFile;
+    FILE *asFile;
     cur_line line;
     line.code = temp_str;
     line.fileName = cutStr(fileName,".as");
+
+    /*checking if correct extension*/
+    if(!isCorrectFileName(fileName)){
+        printf("Error: can't open file %s - incorrect format.Skipped.\n",fileName);
+        return FALSE;
+    }    
+    
+    asFile = readFile(line.fileName,".as");
+
+    if(asFile == NULL){
+        printf("Error: file %s is inaccessible for reading.Skipped.\n",fileName);
+        return FALSE;
+    }
+    
     if(line.fileName == NULL){
-        printf("error: cannot cut filename\n");
+        printf("Error: cannot cut filename\n");
         return FALSE;
     }
     amFile = writeFile(line.fileName,".am");
   
     if(amFile == NULL){
-        printf("%s.as: error: failed to create output file '%s.am'\n",line.fileName,line.fileName);
+        printf("%s.as: Error: failed to create output file '%s.am'\n",line.fileName,line.fileName);
         return FALSE;
     }
     
     /*we going in file line by line*/
-    for(line.num = 1;fgets(temp_str,MAX_LINE_LENGTH+2,file)!=NULL;line.num++){
-        if (strchr(temp_str, '\n') == NULL && !feof(file)) {
+    for(line.num = 1;fgets(temp_str,MAX_LINE_LENGTH+2,asFile)!=NULL;line.num++){
+        if (strchr(temp_str, '\n') == NULL && !feof(asFile)) {
 			printf("%s.as: error: Line too long to process. Maximum line length should be %d.",line.fileName,MAX_LINE_LENGTH);
             is_success = FALSE;
         }
-        expandMacros(line,&is_success,&skip_current_macro,&is_in_macro,macro_name,amFile);
+        if(!expandMacros(line,&skip_current_macro,&is_in_macro,macro_name,amFile)){
+            is_success = FALSE;
+        }
     }
     fclose(amFile);
     if(!is_success){
@@ -52,11 +72,21 @@ bool preprocessFile(FILE *file,char *fileName){
     free(line.fileName);
      
     
-    return TRUE;
+    return is_success;
 }
 
 
-void expandMacros(cur_line line,bool *is_success,bool *skip_current_macro,bool *is_in_macro,char *macro_name,FILE *amFile){
+/**
+ * Checks whether the current line contains a macro call or declaration.
+ * Expands existing macros and write .am (file with no macro lines).
+ * @param line Code line with information about file and num of line.
+ * @param skip_current_macro If found some problems inside macro skipin it.
+ * @param is_in_macro If in macro just saving lines of code.
+ * @param macro_name When in macro checking the name of it.
+ * @param amFile Output file.
+ * @return Success status per line.
+ */
+bool expandMacros(cur_line line,bool *skip_current_macro,bool *is_in_macro,char *macro_name,FILE *amFile){
     int i,j; /*pointer for strings*/
     char savedWord[MAX_LINE_LENGTH+2];
     char restOfLine[MAX_LINE_LENGTH+2];
@@ -69,20 +99,19 @@ void expandMacros(cur_line line,bool *is_success,bool *skip_current_macro,bool *
 
     if(isEmptyStr(line.code,i)){
         fputs(line.code,amFile);
-        return;/*comment or empty string - skip*/
+        return TRUE;/*comment or empty string - skip*/
     }
 
     
     if(!isNextWordLabel(line,savedWord,&i) && isMacroExist(savedWord)){
         macroContent = getMacro(savedWord);
         fputs(macroContent,amFile);
-        return;
+        return TRUE;
     }
     if(strstr(line.code, "mcro") != NULL && strcmp(savedWord,"mcro") == 1){
         printf("%s.as:%ld: error: text before mcro declaration.\n",line.fileName,line.num);
-        *is_success = FALSE;
         *skip_current_macro = TRUE;
-        return;
+        return FALSE;
     }
 
     /*searching for mcro start line*/
@@ -95,9 +124,8 @@ void expandMacros(cur_line line,bool *is_success,bool *skip_current_macro,bool *
         skipSpaces(line.code,&i);
         if(line.code[i] != '\n'){
             printf("%s.as:%ld: error: text after mcro declaration.\n",line.fileName,line.num);
-            *is_success = FALSE;
             *skip_current_macro = TRUE;
-            return;
+            return FALSE;
         }
         if(!isReservedWord(macro_name) && getMacro(macro_name) == NULL){
 
@@ -105,20 +133,19 @@ void expandMacros(cur_line line,bool *is_success,bool *skip_current_macro,bool *
             appendMacroLine(macro_name,restOfLine);
         }else{
             printf("%s.as:%ld: error: mcro %s declareted already.\n",line.fileName,line.num,macro_name);
-            *is_success = FALSE;
             *skip_current_macro = TRUE;
-            return;
+            return FALSE;
         }
-
-        return;
+        /*getting out in the end of macro line*/
+        return TRUE;
     }
     /*skippin macro with error*/
     if(*is_in_macro && *skip_current_macro){
         if(strcmp(savedWord,"mcroend")==0){
-            *is_in_macro = FALSE; 
-        }else{
-            return;
+            *is_in_macro = FALSE;
+            *skip_current_macro = FALSE;
         }
+            return TRUE;
     }
 
     /*copying macro line or exit macro cicle*/
@@ -130,12 +157,12 @@ void expandMacros(cur_line line,bool *is_success,bool *skip_current_macro,bool *
             /*appendMacroLine in macro table by *macro_name*/
             appendMacroLine(macro_name,line.code);
         }
-        return;
+        return TRUE;
     }
 
     /*else just save line in .am*/
     fputs(line.code,amFile);
-    
+    return TRUE;
 }
 
 

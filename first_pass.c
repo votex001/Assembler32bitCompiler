@@ -13,7 +13,19 @@ bool isLabelBefore = FALSE;
 char savedLabelName[MAX_LINE_LENGTH+2];
 
 
-
+/**
+ * First process checking if correct:labels,commands and directives.
+ * Work line by line.
+ * 
+ * @param line line information and name of file.
+ * @param ic Instruction counter.
+ * @param dc Data counter.
+ * @param codeHead Head of instruction table list.
+ * @param dataImg Data array.
+ * @param entryHead Head of entry table list.
+ * 
+ * @return Success per line.
+ */
 bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
             unsigned char *dataImg,codeEntryTable *entryHead){
 

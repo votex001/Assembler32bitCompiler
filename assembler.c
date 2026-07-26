@@ -4,9 +4,18 @@
 #include "preprocess.h"
 #include "process_files.h"
 
-void compileFile(char *file);
 
 
+/**
+ * Processes a single source file.
+ * Checking format of files start preprocess and proccess.
+ * @param fileName File name with extension.
+ */
+void compileFile(char *fileName);
+
+/**
+ * Entry point - 32bit assembler.Assembly language specified in booklet 2026b.
+ */
 int main(int argc, char *files[]){
     int i;
 
@@ -19,27 +28,10 @@ int main(int argc, char *files[]){
 
 void compileFile(char *fileName){
 
-    FILE *file_address;
-    char *nameWithOtherExt;
-
-    /*checking if correct extension*/
-    if(!isCorrectFileName(fileName)){
-        printf("Error: can't open file %s - incorrect format.Skipped.\n",fileName);
-        return;
-    }    
     
-    file_address = fopen(fileName,"r");
-
-    if(file_address == NULL){
-        printf("Error: file %s is inaccessible for reading.Skipped.\n",fileName);
-        return;
-    }
     /*if we created .am we can start do first pas and second*/
-    if(preprocessFile(file_address,fileName)){
+    if(preprocessFile(fileName)){
        processFiles(fileName);
     };
-
-    
-    fclose(file_address);
 
 }

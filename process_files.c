@@ -12,8 +12,14 @@
 
 
 
-
-void processFiles(char *fullName){
+/**
+ * Function performs first and second pass of assembler.
+ * Read preprocessed file .am line by line to save 
+ * tables of code in first proccess.
+ * If no caught errors starts second pass that write out files.
+ * @param fileName File name with extension .as.
+ */
+void processFiles(char *fileName){
 
     long ic = IC_INIT_VAL,dc = 0; /*init start value of ic and dc*/
     cur_line line;/*line information*/
@@ -28,8 +34,8 @@ void processFiles(char *fullName){
     /*work with files*/
     FILE *amFile;
     line.code = temp_str;
-    line.num = getLineNum(line.code);
-    line.fileName = cutStr(fullName,".as");
+    line.num = 0;
+    line.fileName = cutStr(fileName,".as");
     amFile = readFile(line.fileName,".am");
     /*printing error int read file so we need just to exit*/
     if(amFile == NULL){
