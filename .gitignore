@@ -28,6 +28,9 @@
 *.so.*
 *.dylib
 *.am
+*.ext
+*.ent
+*.ob
 
 # Executables
 *.exe
