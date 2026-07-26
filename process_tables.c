@@ -15,10 +15,10 @@ codeExternTable externHead;
 long arrCounter = CODE_SINGLE_BLOCK;/*cheack in func if dc == arrCounter realoc dataImg  +100*/
 
 /*halper functions */
-void saveByte(unsigned char *dataImg,unsigned int value, long *dc);
-bool checkRange(long value, unsigned int bytes);
+void saveByte(unsigned char *dataImg,unsigned long value, long *dc);
+bool checkRange(long value, unsigned long bytes);
 void saveNumber(unsigned char *dataImg,long value, directive dir, long *dc);
-void saveInstructionCode(codeImageTable *codeHead,unsigned int machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI);
+void saveInstructionCode(codeImageTable *codeHead,unsigned long machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI);
 symbol *createSymbol(long address,char *name, bool isData );
 
 
@@ -187,7 +187,7 @@ void saveSymbols(char *name,bool isData,long address){
 
 
 void saveJTypeInst(codeImageTable *codeHead,opcode opcode,bool isReg,char *label,unsigned char reg,long IC,long lineNum){
-    unsigned int machineCode = 0;
+    unsigned long machineCode = 0;
     /*saving hlt separate because of with label false + is reg false*/
     if(opcode == HLT_OP){
         machineCode = ((opcode & 0x3f) << 26);
@@ -204,7 +204,7 @@ void saveJTypeInst(codeImageTable *codeHead,opcode opcode,bool isReg,char *label
 }
 
 void saveITypeInst(codeImageTable *codeHead,opcode opcode,bool isLabel,char *label,unsigned char rs,unsigned char rt,unsigned short immed,long IC,long lineNum){
-    unsigned int machineCode = ((opcode & 0x3f) << 26) |
+    unsigned long machineCode = ((opcode & 0x3f) << 26) |
                                ((rs & 0x1f) << 21) |
                                ((rt & 0x1f) << 16);
     
@@ -222,12 +222,11 @@ void saveITypeInst(codeImageTable *codeHead,opcode opcode,bool isLabel,char *lab
 void saveRTypeInst(codeImageTable *codeHead,opcode opcode,unsigned char rs,
                             unsigned char rt,unsigned char rd,unsigned char funct,long IC)
 {
-    unsigned int machineCode = 0;
-        machineCode = ((opcode & 0x3f) << 26) |
-                      ((rs & 0x1f) << 21) |
-                      ((rt & 0x1f) << 16) |
-                      ((rd & 0x1f) << 11) |
-                      ((funct & 0x1f) << 6);
+    unsigned long machineCode = ((opcode & 0x3f) << 26) |
+                                ((rs & 0x1f) << 21) |
+                                ((rt & 0x1f) << 16) |
+                                ((rd & 0x1f) << 11) |
+                                ((funct & 0x1f) << 6);
         
         saveInstructionCode(codeHead,machineCode,FALSE,NULL,IC,0,FALSE);
 }
@@ -324,7 +323,7 @@ bool isSymbolExist(char *name){
     return FALSE;
 }
 
-void saveInstructionCode(codeImageTable *codeHead,unsigned int machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI){
+void saveInstructionCode(codeImageTable *codeHead,unsigned long machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI){
     codeImageTable current = *codeHead;
     codeImageTable newLine = mallocWithCheck(sizeof(*newLine));
     newLine->hasLabel = withLabel;
@@ -360,7 +359,7 @@ void saveInstructionCode(codeImageTable *codeHead,unsigned int machineCode,bool 
     current->next = newLine;
 }
 
-bool checkRange(long value, unsigned int bytes)
+bool checkRange(long value, unsigned long bytes)
 {   /*fast checking if value can be stored in needed bytes*/
     long min;
     long max;
@@ -415,7 +414,7 @@ void saveNumber(unsigned char *dataImg,long value, directive dir, long *dc)
 
 
 
-void saveByte(unsigned char *dataImg,unsigned int value, long *dc)
+void saveByte(unsigned char *dataImg,unsigned long value, long *dc)
 {
     dataImg[(*dc)++] = value & 0xff;
 }

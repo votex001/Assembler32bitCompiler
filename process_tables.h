@@ -16,7 +16,7 @@ typedef symbol *symbolTable;
 
 
 typedef struct singleCodeLine {
-    unsigned int machineCode;
+    unsigned long machineCode; /*always minimum 4byte*/
     bool hasLabel;
     bool isI;/*in second pass we will count steps of I instructions*/
     char *label;
@@ -58,7 +58,7 @@ void saveJTypeInst(codeImageTable *codeHead,opcode opcode,bool isReg,char *label
 void saveITypeInst(codeImageTable *codeHead,opcode opcode,bool isLabel,char *label,unsigned char rs,unsigned char rt,unsigned short immed,long IC,long lineNum);
 void saveRTypeInst(codeImageTable *codeHead,opcode opcode,unsigned char rs,unsigned char rt,unsigned char rd,unsigned char funct,long IC);
 bool saveDataCode(unsigned char *dataImg,char *valueToSave,directive dir, int size,long *dc,cur_line line);
-bool checkRange(long value, unsigned int bytes);
+bool checkRange(long value, unsigned long bytes);
 symbolTable getLabel(char *name);
 void saveExtern(char *name);
 void saveEntry(codeEntryTable *entryHead,char *label,long lineNum);

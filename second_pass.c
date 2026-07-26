@@ -79,7 +79,7 @@ bool sPassLine(char *fileName,long *ic,long *dc,codeImageTable *codeHead,
                 }
                
             }
-            fprintf(obFile,"%ld %02X %02X %02X %02X\n",lineCount,(currentCodeLine->machineCode & 0xFF),
+            fprintf(obFile,"%ld %02lX %02lX %02lX %02lX\n",lineCount,(currentCodeLine->machineCode & 0xFF),
                                                                 (currentCodeLine->machineCode >> 8) & 0xFF,
                                                                 (currentCodeLine->machineCode >> 16) & 0xFF,
                                                                 (currentCodeLine->machineCode >> 24) & 0xFF);
