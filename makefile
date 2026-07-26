@@ -9,6 +9,9 @@ OBJECTS = assembler.o utils.o preprocess.o macro_table.o \
 assembler: ${OBJECTS} ${OTHER}
 	gcc $(OBJECTS) ${FLAGS} -o $@
 
+assembler.o: assembler.c ${OTHER}
+	gcc -c assembler.c ${FLAGS} -o $@
+
 utils.o: utils.c utils.h ${OTHER}
 	gcc -c utils.c ${FLAGS} -o $@
 
@@ -40,3 +43,6 @@ original_file_table.o: original_file_table.c original_file_table.h ${OTHER}
 
 second_pass.o: second_pass.c second_pass.h ${OTHER}
 	gcc -c second_pass.c ${FLAGS} -o $@
+
+clean:
+	rm -rf *.o
