@@ -3,7 +3,7 @@
 #include "process_tables.h"
 
 
-bool sPassLine(char *fileName,long *ic,long *dc,codeImageTable *codeHead,
-                                                    codeEntryTable *entryHead,unsigned char *dataImg);
+bool sPassLine(char *fileName,long *ic,long *dc,codeImageTable codeHead,
+                                                    codeEntryTable entryHead,unsigned char *dataImg);
 
 #endif

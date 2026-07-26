@@ -4,13 +4,13 @@
 #include "file_utils.h"
 
 
-bool sPassLine(char *fileName,long *ic,long *dc,codeImageTable *codeHead,
-                                                    codeEntryTable *entryHead,unsigned char *dataImg){
+bool sPassLine(char *fileName,long *ic,long *dc,codeImageTable codeHead,
+                                                    codeEntryTable entryHead,unsigned char *dataImg){
     
     bool isSuccess = TRUE;
     FILE *obFile,*extFile,*entFile;
-    codeImageTable currentCodeLine = *codeHead;
-    codeEntryTable currentEntry = *entryHead;
+    codeImageTable currentCodeLine = codeHead;
+    codeEntryTable currentEntry = entryHead;
     symbolTable label;
     long lineCount = IC_INIT_VAL,calcResult,dcCount;
     

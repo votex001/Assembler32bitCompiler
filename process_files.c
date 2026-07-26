@@ -43,7 +43,7 @@ void processFiles(char *fullName){
         }
     }
     if(isSuccess){
-         if(!sPassLine(line.fileName,&ic,&dc,&codeHead,&entryHead,dataImg)){
+         if(!sPassLine(line.fileName,&ic,&dc,codeHead,entryHead,dataImg)){
             isSuccess = FALSE;
          }
     }
