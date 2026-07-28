@@ -1,4 +1,5 @@
 #include <stdio.h>
+
 #include "global.h"
 #include "utils.h"
 #include "preprocess.h"
@@ -28,10 +29,14 @@ int main(int argc, char *files[]){
 
 void compileFile(char *fileName){
 
-    
+    /*checking if correct extension*/
+    if(!isCorrectFileName(fileName)){
+        printf("Error: can't open file %s - incorrect format.Skipped.\n",fileName);
+        return;
+    }    
     /*if we created .am we can start do first pas and second*/
-    if(preprocessFile(fileName)){
+    else if(preprocessFile(fileName)){
        processFiles(fileName);
-    };
+    }
 
 }
