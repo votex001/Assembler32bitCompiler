@@ -17,6 +17,8 @@ typedef enum bool {
 /* Initial IC value */
 #define IC_INIT_VAL 100
 
+
+/*Current line information*/
 typedef struct cur_line
 {
     /*to print where we has errors*/
@@ -29,7 +31,7 @@ typedef struct cur_line
     
 } cur_line;
 
-
+/* Enum of all instruction opcodes*/
 typedef enum opcode {
     /*OP 0 GROUP*/
     ADD_OP = 0,
@@ -74,7 +76,7 @@ typedef enum opcode {
 
 } opcode;
 
-
+/* Enum of all instruction functs*/
 typedef enum funct{
 
 
@@ -92,7 +94,7 @@ typedef enum funct{
     NONE_FUNCT = 0
 } funct;
 
-
+/* Enum of all existing directives*/
 typedef enum directive{
     DH_DIR,
     DW_DIR,

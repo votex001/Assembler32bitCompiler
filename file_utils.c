@@ -2,10 +2,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "file_utils.h"
 #include "utils.h"
 
-/*get name and extension and creates file*/
+/**
+ * Function to get link of file and write on it.
+ * @param fileName Name without extension.
+ * @param ext Extension - format is (.ext).
+ */
 FILE *writeFile(const char *fileName, const char *ext){
     char *fileWithExt;
     FILE *file;
@@ -23,6 +28,12 @@ FILE *writeFile(const char *fileName, const char *ext){
     return file;
 }
 
+
+/**
+ * Function to get link of read only file file.
+ * @param fileName Name without extension.
+ * @param ext Extension - format is (.ext).
+ */
 FILE *readFile(const char *fileName, const char *ext){
     char *fileWithExt;
     FILE *file;
@@ -40,7 +51,11 @@ FILE *readFile(const char *fileName, const char *ext){
     return file;
 }
 
-/*get name and extenssion and deletes file NEED TO CLOSE FILE BEFORE!*/
+/**
+ * Function delete file - need to be closed before.
+ * @param name Name without extension.
+ * @param ext Extension - format is (.ext).
+ */
 void deleteFile(const char *name, const char *ext){
     char *fileWithExt;
 
