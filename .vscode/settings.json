@@ -5,6 +5,7 @@
         "addi",
         "andi",
         "asciz",
+        "functs",
         "mcro",
         "mcroend",
         "mvhi",
