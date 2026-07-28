@@ -108,9 +108,8 @@ bool expandMacros(cur_line line,bool *skip_current_macro,bool *is_in_macro,char 
         fputs(macroContent,amFile);
         return TRUE;
     }
-
     /*if found mcro in command but text before*/
-    if(strstr(line.code, "mcro") != NULL && strcmp(savedWord,"mcro") == 1){
+    if(strstr(line.code, "mcro") != NULL && strcmp(savedWord,"mcro") != 0 && strcmp(savedWord,"mcroend") == 1){
         printf("%s.as:%ld: error: text before mcro declaration.\n",line.fileName,line.num);
         *skip_current_macro = TRUE;
         return FALSE;
