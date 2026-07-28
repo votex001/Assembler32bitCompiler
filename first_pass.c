@@ -30,8 +30,9 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
             unsigned char *dataImg,codeEntryTable *entryHead){
 
     int i = 0;/*char 0 in line*/
-    char firstWord[MAX_LINE_LENGTH + 2];
-    char nextWord[MAX_LINE_LENGTH + 2];
+    char firstWord[MAX_LINE_LENGTH + 2];/*line to save label or command*/
+    char nextWord[MAX_LINE_LENGTH + 2]; /*line to save parameters or command*/
+
     /*instruction*/
     opcode opcode;
     funct funct;
@@ -53,6 +54,11 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
     if(isEmptyStr(line.code,i)){
         return TRUE;
     }
+
+    /*
+    Label: \n
+    - we are here
+    */
     if(isLabelBefore){
         isLabelBefore = FALSE;
         if(isNextWordLabel(line,firstWord,&i)){
@@ -70,13 +76,14 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
         getDirectiveByName(savedLabelName,&directive,&size);
         getFuncOp(savedLabelName,&funct,&opcode);
         if(directive >= DH_DIR  && directive <= ASCIZ_DIR){
-            saveSymbols(savedLabelName,TRUE,*dc);
+            saveLabels(savedLabelName,TRUE,*dc);
         }else if(opcode != NONE_OP){
-            saveSymbols(savedLabelName,FALSE,*ic);
+            saveLabels(savedLabelName,FALSE,*ic);
         }
         
         i=0;/*reseting i after cheking if it label or not*/
     }
+
     /*first word will be label or not but it will be saved in firstWord*/
     if(isNextWordLabel(line,firstWord,&i)){
         
@@ -98,8 +105,8 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
             printf("%s.as:%ld: error: label %s conflicts with an existing macro name.\n",line.fileName,line.num,firstWord);
             return FALSE;
         }
-       
 
+        /*label without text after it - moving to next line*/
         if(isEmptyStr(line.code,i)){
             strcpy(savedLabelName,firstWord);
             isLabelBefore = TRUE;
@@ -123,11 +130,12 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
         getFuncOp(nextWord,&funct,&opcode);
         /*if non dererctive or extern or entry just pass*/
         if(directive >= DH_DIR  && directive <= ASCIZ_DIR){
-            saveSymbols(firstWord,TRUE,*dc);
+            saveLabels(firstWord,TRUE,*dc);
         }else if(opcode != NONE_OP){
-            saveSymbols(firstWord,FALSE,*ic);
+            saveLabels(firstWord,FALSE,*ic);
         }
 
+        /*page 34*/
         if(directive == EXTERN_DIR || directive == ENTRY_DIR){
             printf("%s.as:%ld: warning: label '%s' before directive '%s' is ignored.\n",line.fileName, line.num, firstWord, nextWord);
         }
@@ -137,13 +145,11 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
     }
     
     /*need to be reserved word but not register*/
-    if(!isReservedWord(firstWord)){
-        printf("%s.as:%ld: error: invalid command '%s'\n",line.fileName,line.num,firstWord);
-        return FALSE;
-    }else if(getRegisterNum(firstWord)!=-1){
+    if(!isReservedWord(firstWord) || getRegisterNum(firstWord)!=-1){
         printf("%s.as:%ld: error: invalid command '%s'\n",line.fileName,line.num,firstWord);
         return FALSE;
     }
+
     /*getting now info about command from first word*/
     getDirectiveByName(firstWord,&directive,&size);
     getFuncOp(firstWord,&funct,&opcode);
@@ -169,6 +175,7 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
         
 
         /*J instructions only 1 param*/
+        /*jmp la call*/
         if(opcode >=30){
 
             /*separate check jmp with register*/ 
@@ -194,8 +201,12 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
                 return TRUE;
             }
         }
+
+
         /*every command after this stage need to be minimum with 2 params and first is register*/
         if(!isCommaNext(line,&i,firstWord,nextWord))return FALSE;
+
+        /*First argument after that line should be register only*/
         if(fParam == -1){
             printf("%s.as:%ld: error: argument %s is not register as aspected.\n",line.fileName,line.num,nextWord);
             return FALSE;
@@ -207,6 +218,7 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
         
         
         /*instruction with 2 params*/
+        /*move mvhi mvlo*/
         if(opcode == MOVE_OP){
             /*second argument might be register and no text after*/
             
@@ -220,14 +232,17 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
             return TRUE;
         }
 
-        /*every command after this stage need to be minimum with 3 params*/
-        if(!isCommaNext(line,&i,firstWord,nextWord))return FALSE;
+        
+        
         /*is first 2 need to be registers*/
         if(sParam == -1 && (opcode == ADD_OP || (opcode >=15 && opcode <= 18))){
                 printf("%s.as:%ld: error: argument %s is not register as aspected.\n",line.fileName,line.num,nextWord);
                 return FALSE;
-            }
+        }
+
+
         /*second param might be integer 2-byte size*/
+        /*addi subi ori nori lb sb lw sw lh sh*/
         if((opcode >= 10 && opcode <= 14) || (opcode >= 19 && opcode <= 24)){
             immed = strtol(nextWord,NULL,10);
             if(!is_int(nextWord)){
@@ -238,12 +253,15 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
                 return FALSE;
             }
         }
+        /*every command after this stage need to be minimum with 3 params*/
+        if(!isCommaNext(line,&i,firstWord,nextWord))return FALSE;
         /*get third param*/
         getNextWord(line,nextWord,&i);
         tParam = getRegisterNum(nextWord);
 
 
         /*instructions with 3 params and first 2 is registers*/
+        /*add bne beq blt bgt*/
         if(opcode == ADD_OP || (opcode >=15 && opcode <= 18)){
             /*every mathemathical without immed*/
             if(opcode == ADD_OP){
@@ -275,6 +293,7 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
             }
         }
         /*I instruction with immed - 3rd param is register*/
+        /*addi subi ori nori lb sb lw sw lh sh*/
         if((opcode >= 10 && opcode <= 14) || (opcode >= 19 && opcode <= 24)){
 
             
@@ -296,6 +315,7 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
             
     }
     
+    /* Directives .db .dw .dh .asciz*/
     if(directive >= DH_DIR && directive <= ASCIZ_DIR){
         while(!isEmptyStr(line.code,i)){
             /*get word*/
@@ -310,6 +330,7 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
         }
     }
 
+    /*.extern*/
     if(directive == EXTERN_DIR){
         getNextWord(line,nextWord,&i);
         if(!isValidLabel(nextWord)){
@@ -326,6 +347,7 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
         return TRUE;
     }
 
+    /*.entry*/
     if(directive == ENTRY_DIR){
         getNextWord(line,nextWord,&i);
         if(!isValidLabel(nextWord)){
@@ -337,8 +359,7 @@ bool fPassLine(cur_line line,long *ic,long *dc,codeImageTable *codeHead,
         return TRUE;
     }
 
-    
 
-    
+    /*no errors found*/
     return TRUE;
 }

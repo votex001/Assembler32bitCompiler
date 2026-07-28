@@ -96,18 +96,23 @@ int getRegisterNum(const char *reg)
     int num = 0;
     int i = 1; /*pass $*/
 
+
+    /*register should start with $*/
     if (reg[0] != '$')
         return -1;
 
-    while (isdigit(reg[i]))
+    /*util it number and it should be max 2 numbers */
+    while (isdigit(reg[i]) && i<3)
     {
         num = num * 10 + (reg[i] - '0');
         i++;
     }
+
     /*after num need to be only \0*/
     if (reg[i] != '\0')
         return -1;
 
+    /*there is 32 registers only*/
     if (num >= 0 && num <= 31)
         return num;
 
@@ -123,7 +128,7 @@ int getRegisterNum(const char *reg)
 void getDirectiveByName(const char *name,directive *dir_out,int *size_out){
     cmdDirectiveEl *el;
 
-    *dir_out = NONE_DIR;
+    *dir_out = NONE_DIR;/*starting searchin with non directive value*/
     *size_out = 0;
 
     for(el = dirTable; el->name != NULL;el++){

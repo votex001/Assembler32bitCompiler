@@ -14,7 +14,9 @@
 FILE *writeFile(const char *fileName, const char *ext){
     char *fileWithExt;
     FILE *file;
+    /*allocate memory for extension*/
     fileWithExt = mallocWithCheck((strlen(fileName) + strlen(ext)) + 1);
+
 
     if(fileWithExt == NULL){
         printf("Can't create or rewrite to file %s, skip file.\n",fileWithExt);
@@ -37,6 +39,7 @@ FILE *writeFile(const char *fileName, const char *ext){
 FILE *readFile(const char *fileName, const char *ext){
     char *fileWithExt;
     FILE *file;
+    /*allocate memory for extension*/
     fileWithExt = mallocWithCheck((strlen(fileName) + strlen(ext)) + 1);
 
     if(fileWithExt == NULL){
@@ -58,7 +61,7 @@ FILE *readFile(const char *fileName, const char *ext){
  */
 void deleteFile(const char *name, const char *ext){
     char *fileWithExt;
-
+    /*allocate memory for extension*/
     fileWithExt = mallocWithCheck((strlen(name) + strlen(ext)) + 1);
 
     if (fileWithExt == NULL){

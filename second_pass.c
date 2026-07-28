@@ -3,26 +3,45 @@
 #include "global.h"
 #include "process_tables.h"
 #include "file_utils.h"
-/*TODO: description*/
 
+
+
+/**
+ * Seccond pass:
+ * Resolves label addresses, updates instruction code
+ * and write final files (.ent, .ext, .ob).
+ * @param fileName File name without extension.
+ * @param ic Instruction counter.
+ * @param dc Data counter.
+ * @param codeHead Head or linked list.
+ * @param entryHead Head of linked list.
+ * @param dataImg Data array.
+ * @return Success status.
+ */
 bool sPassLine(char *fileName,long *ic,long *dc,codeImageTable codeHead,
                                                     codeEntryTable entryHead,unsigned char *dataImg){
     
-    bool isSuccess = TRUE;
-    FILE *obFile,*extFile,*entFile;
+    bool isSuccess = TRUE;/*success status*/
+    FILE *obFile,*extFile,*entFile; /*file pointers*/
+    /*heads*/
+    labelTable label;
     codeImageTable currentCodeLine = codeHead;
     codeEntryTable currentEntry = entryHead;
-    symbolTable label;
-    long lineCount = IC_INIT_VAL,calcResult,dcCount;
+
+    long lineCount = IC_INIT_VAL,calcResult,dcCount; /*needed long numbers*/
     
+    /*init files*/
     obFile = writeFile(fileName,".ob");
     extFile = writeFile(fileName,".ext");
     entFile = writeFile(fileName,".ent");
+
+    /*if can't create just pass this function logic*/
     if(obFile == NULL || extFile == NULL ||entFile == NULL ){
         isSuccess = FALSE;
     }
 
 
+    /*seccond pass logic*/
     if(isSuccess){
         
         /*first processing instruction and write to .ob*/
@@ -49,8 +68,10 @@ bool sPassLine(char *fileName,long *ic,long *dc,codeImageTable codeHead,
                 }
                 currentCodeLine->machineCode = currentCodeLine->machineCode | (calcResult & 0xFFFF);
             }/*has label but not I instruction*/
+            
             else if(currentCodeLine->hasLabel){
                 label = getLabel(currentCodeLine->label);
+                /*or it local label or ext or undefined */
                 if(label != NULL){
                     /*if is data we adding ic to address*/
                     if(label->isData){
@@ -70,6 +91,7 @@ bool sPassLine(char *fileName,long *ic,long *dc,codeImageTable codeHead,
                         continue;
                     }
                 }else if(isExternExist(currentCodeLine->label)){
+                    /*extern file printing*/
                      fprintf(extFile,"%s %ld\n",currentCodeLine->label,currentCodeLine->IC);
                 }else{
                     printf("%s.as:%ld: error: undefined label '%s'\n",fileName,currentCodeLine->lineNum,currentCodeLine->label);
@@ -99,6 +121,7 @@ bool sPassLine(char *fileName,long *ic,long *dc,codeImageTable codeHead,
             fprintf(obFile,"%02X ",dataImg[dcCount++]);
         }
         
+        /*entry file printing*/
         while (currentEntry != NULL)
         {
             label = getLabel(currentEntry->label);
@@ -121,24 +144,6 @@ bool sPassLine(char *fileName,long *ic,long *dc,codeImageTable codeHead,
         
 
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     fclose(obFile);
     fclose(extFile);

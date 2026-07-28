@@ -1,108 +1,31 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+
 #include "process_tables.h"
 #include "global.h"
 #include "utils.h"
-#include "string.h"
-#include "stdlib.h"
-#include "limits.h"
 /*TODO: description*/
 
 /*global table*/
-symbolTable symbolHead;
+labelTable labelHead;
 codeExternTable externHead;
 
 
 long arrCounter = CODE_SINGLE_BLOCK;/*cheack in func if dc == arrCounter realoc dataImg  +100*/
 
 /*halper functions */
-void saveByte(unsigned char *dataImg,unsigned long value, long *dc);
-bool checkRange(long value, unsigned long bytes);
-void saveNumber(unsigned char *dataImg,long value, directive dir, long *dc);
-void saveInstructionCode(codeImageTable *codeHead,unsigned long machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI);
-symbol *createSymbol(long address,char *name, bool isData );
-
-
-void freeSymbolTable(){
-    symbolTable next;
-     while (symbolHead != NULL)
-    {
-        next = symbolHead->next;
-        free(symbolHead->label);
-        free(symbolHead);
-        symbolHead = next;
-    }
-
-}
-
-
-void freeExternTable(){
-    codeExternTable next;
-
-    while (externHead != NULL)
-    {
-        next = externHead->next;
-        free(externHead->label);
-        free(externHead);
-        externHead = next;
-    }
-}
+static void saveByte(unsigned char *dataImg,unsigned long value, long *dc);
+static void saveNumber(unsigned char *dataImg,long value, directive dir, long *dc);
+static void saveInstructionCode(codeImageTable *codeHead,unsigned long machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI);
 
 
 
-void freeCodeTable(codeImageTable codeHead){
-    codeImageTable next;
-
-    while (codeHead != NULL)
-    {
-        next = codeHead->next;
-        free(codeHead->label);
-        free(codeHead);
-        codeHead = next;
-    }
-    
-}
-
-
-void freeEntryTable(codeEntryTable entryHead){
-    codeEntryTable next;
-
-    while (entryHead != NULL)
-    {
-        next = entryHead->next;
-        free(entryHead->label);
-        free(entryHead);
-        entryHead = next;
-    }
-
-}
-
-
-symbolTable getLabel(char *name){
-    symbolTable current = symbolHead;
-
-    while (current != NULL) {
-        if (strcmp(current->label, name) == 0) {
-            return current;
-        }
-        current = current->next;
-    }
-
-    return NULL;
-}
-
-bool isExternExist(char *name){
-    codeExternTable current = externHead;
-    if(current == NULL){
-        return FALSE;
-    }
-    while(current->next != NULL && strcmp(current->label,name) != 0){
-        current = current->next;
-    }
-    return (strcmp(current->label,name) == 0)?TRUE:FALSE;
-}
-
-
-
+/**
+ * Saving extern declaration.
+ * @param name Name of extern.
+ */
 void saveExtern(char *name){
     codeExternTable current = externHead;
     codeExternTable newExtern;
@@ -128,13 +51,17 @@ void saveExtern(char *name){
     current->next = newExtern;
 }
 
+/**
+ * Saving entry declaration place.
+ * @param entryHead Head of entry linked list.
+ * @param label label to entry.
+ * @param lineNum Number of line where declared entry.
+ */
 void saveEntry(codeEntryTable *entryHead,char *label,long lineNum){
     codeEntryTable current = *entryHead;
-    codeEntryTable newEntry;
 
-    
-    
-    newEntry = mallocWithCheck(sizeof(*newEntry));
+    /*init new entry*/
+    codeEntryTable newEntry = mallocWithCheck(sizeof(*newEntry));
     newEntry->label = mallocWithCheck(strlen(label)+1);
     strcpy(newEntry->label,label);
     newEntry->lineNum = lineNum;
@@ -151,26 +78,34 @@ void saveEntry(codeEntryTable *entryHead,char *label,long lineNum){
     current->next = newEntry;
 }
 
-/*saving symbol to Table NOT CHECKING IF LABEL EXIST*/
-void saveSymbols(char *name,bool isData,long address){
-    symbolTable current;
-    symbol *newSymbol = mallocWithCheck(sizeof(*newSymbol));
-    newSymbol->address = address;
-    newSymbol->label = mallocWithCheck(strlen(name) + 1);
-    newSymbol->isData = isData;
-    strcpy(newSymbol->label, name);
-    newSymbol->next = NULL;;
+
+/**
+ * Saving Label information.
+ * @param name Label name.
+ * @param isData In second pass we need to know it.
+ * @param address If is not data it IC else it DC.
+ */
+void saveLabels(char *name,bool isData,long address){
+    labelTable current;
+
+    /*init new label*/
+    label *newLabel = mallocWithCheck(sizeof(*newLabel));
+    newLabel->address = address;
+    newLabel->label = mallocWithCheck(strlen(name) + 1);
+    newLabel->isData = isData;
+    strcpy(newLabel->label, name);
+    newLabel->next = NULL;;
     
     /*we need to check if label exist separate from this func to return ERROR*/
 
     /*1st half of list will be isData second instructions*/
-    if(symbolHead == NULL || symbolHead->address > address){
-        newSymbol->next = symbolHead;
-        symbolHead = newSymbol;
+    if(labelHead == NULL || labelHead->address > address){
+        newLabel->next = labelHead;
+        labelHead = newLabel;
         return;
     }
 
-    current = symbolHead;
+    current = labelHead;
 
     /*finding our label by name*/
     while(current->next != NULL && current->next->address < address)
@@ -178,15 +113,25 @@ void saveSymbols(char *name,bool isData,long address){
 
     /*we adding or in the end of list or in the middle*/
     if(current->next == NULL){
-        current->next = newSymbol;
+        current->next = newLabel;
     }else{
-        newSymbol->next = current->next;
-        current->next = newSymbol;
+        newLabel->next = current->next;
+        current->next = newLabel;
     }
 }
 
-
-void saveJTypeInst(codeImageTable *codeHead,opcode opcode,bool isReg,char *label,unsigned char reg,long IC,long lineNum){
+/**
+ * Saving jump type instructions.
+ * @param codeHead Head of code linked list.
+ * @param opcode opcode number of instruction.
+ * @param isReg If it register.
+ * @param label Label name if it not register.
+ * @param reg Number of register if it is.
+ * @param IC Instruction counter.
+ * @param lineNum Number of line where declared instruction.
+ */
+void saveJTypeInst(codeImageTable *codeHead,opcode opcode,bool isReg,
+                        char *label,unsigned char reg,long IC,long lineNum){
     unsigned long machineCode = 0;
     /*saving hlt separate because of with label false + is reg false*/
     if(opcode == HLT_OP){
@@ -203,7 +148,20 @@ void saveJTypeInst(codeImageTable *codeHead,opcode opcode,bool isReg,char *label
     }
 }
 
-void saveITypeInst(codeImageTable *codeHead,opcode opcode,bool isLabel,char *label,unsigned char rs,unsigned char rt,unsigned short immed,long IC,long lineNum){
+/**
+ * Saving immediate type instructions.
+ * @param codeHead Head of code linked list.
+ * @param opcode opcode number of instruction.
+ * @param isLabel If instruction has label.
+ * @param label Label name if it exist.
+ * @param rs Number of register.
+ * @param rt Number of register.
+ * @param immed Immediate number.
+ * @param IC Instruction counter.
+ * @param lineNum Number of line where declared instruction.
+ */
+void saveITypeInst(codeImageTable *codeHead,opcode opcode,bool isLabel,char *label,
+                    unsigned char rs,unsigned char rt,unsigned short immed,long IC,long lineNum){
     unsigned long machineCode = ((opcode & 0x3f) << 26) |
                                ((rs & 0x1f) << 21) |
                                ((rt & 0x1f) << 16);
@@ -219,6 +177,16 @@ void saveITypeInst(codeImageTable *codeHead,opcode opcode,bool isLabel,char *lab
 
 }
 
+/**
+ * Saving register type instructions.
+ * @param codeHead Head of code linked list.
+ * @param opcode opcode number of instruction.
+ * @param rs Number of register.
+ * @param rt Number of register.
+ * @param rd Number of register.
+ * @param funct funct number of instruction.
+ * @param IC Instruction counter.
+ */
 void saveRTypeInst(codeImageTable *codeHead,opcode opcode,unsigned char rs,
                             unsigned char rt,unsigned char rd,unsigned char funct,long IC)
 {
@@ -231,8 +199,16 @@ void saveRTypeInst(codeImageTable *codeHead,opcode opcode,unsigned char rs,
         saveInstructionCode(codeHead,machineCode,FALSE,NULL,IC,0,FALSE);
 }
 
-
-
+/**
+ * Saving .data type instruction.
+ * @param dataImg Data image array to save data.
+ * @param valueToSave Machine code to save.
+ * @param dir Directive type (.asciz,.dw,.dh,.db).
+ * @param size Byte to use for saving.
+ * @param dc Data counter.
+ * @param line Line information.
+ * @return Success status.
+ */
 bool saveDataCode(unsigned char *dataImg,char *valueToSave,directive dir, int size,long *dc,cur_line line){
 
     long value;
@@ -254,6 +230,7 @@ bool saveDataCode(unsigned char *dataImg,char *valueToSave,directive dir, int si
                 exit(1);
             }
 
+            /*new block of memory*/
             if((*dc) + strlen(valueToSave) + 1  >= arrCounter){
                 while((*dc) + strlen(valueToSave) + 1 >= arrCounter){
                     arrCounter += CODE_SINGLE_BLOCK;
@@ -261,7 +238,7 @@ bool saveDataCode(unsigned char *dataImg,char *valueToSave,directive dir, int si
                 dataImg = reallocWithCheck(dataImg,arrCounter);
             }
 
-        /*skippin " at start and in the end of"*/
+        /* skipping " */
         i = 1;
         while (i<MAX_LINE_LENGTH&& valueToSave[i] &&valueToSave[i]!='"' &&valueToSave[i]!='\0')
         {
@@ -276,6 +253,7 @@ bool saveDataCode(unsigned char *dataImg,char *valueToSave,directive dir, int si
             printf("Memory overflow\n");
             exit(1);
         }
+        /*new block of memory*/
         if((*dc) + size >= arrCounter){
             while((*dc) + size >= arrCounter){
                 arrCounter += CODE_SINGLE_BLOCK;
@@ -300,30 +278,148 @@ bool saveDataCode(unsigned char *dataImg,char *valueToSave,directive dir, int si
     return TRUE;
 }
 
+/**
+ * Get label information by name.
+ * @param name Name of label to search.
+ * @return Original label from linked list.
+ */
+labelTable getLabel(char *name){
+    labelTable current = labelHead;
 
-
-/*from here helper functions*/
-
-
-bool isSymbolExist(char *name){
-    symbolTable current = symbolHead;
-
-    if(current == NULL){
-        return FALSE;
-    }
-
-    while(current != NULL){
-        if(strcmp(current->label,name) == 0){
-            return TRUE;
+    while (current != NULL) {
+        if (strcmp(current->label, name) == 0) {
+            return current;
         }
         current = current->next;
     }
 
-    
-    return FALSE;
+    return NULL;
 }
 
-void saveInstructionCode(codeImageTable *codeHead,unsigned long machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI){
+/**
+ * Function to delete table.
+ */
+void freeLabelTable(){
+    labelTable next;
+     while (labelHead != NULL)
+    {
+        next = labelHead->next;
+        free(labelHead->label);
+        free(labelHead);
+        labelHead = next;
+    }
+
+}
+
+/**
+ * Function to delete table.
+ */
+void freeExternTable(){
+    codeExternTable next;
+
+    while (externHead != NULL)
+    {
+        next = externHead->next;
+        free(externHead->label);
+        free(externHead);
+        externHead = next;
+    }
+}
+
+/**
+ * Function to delete table.
+ * @param codeHead Head of linked list.
+ */
+void freeCodeTable(codeImageTable codeHead){
+    codeImageTable next;
+
+    while (codeHead != NULL)
+    {
+        next = codeHead->next;
+        free(codeHead->label);
+        free(codeHead);
+        codeHead = next;
+    }
+    
+}
+
+/**
+ * Function to delete table.
+ * @param entryHead Head of linked list.
+ */
+void freeEntryTable(codeEntryTable entryHead){
+    codeEntryTable next;
+
+    while (entryHead != NULL)
+    {
+        next = entryHead->next;
+        free(entryHead->label);
+        free(entryHead);
+        entryHead = next;
+    }
+
+}
+
+/**
+ * Function that checks if Extern is declared.
+ * @param name Name of Extern.
+ * @return Found status.
+ */
+bool isExternExist(char *name){
+    codeExternTable current = externHead;
+    if(current == NULL){
+        return FALSE;
+    }
+    while(current->next != NULL && strcmp(current->label,name) != 0){
+        current = current->next;
+    }
+    return (strcmp(current->label,name) == 0)?TRUE:FALSE;
+}
+
+/**
+ * Function that checks if value is in range of bytes.
+ * @param value Value to check range.
+ * @param bytes Byte range (1-4).
+ * @return Success status.
+ */
+bool checkRange(long value, unsigned long bytes)
+{   /*fast checking if value can be stored in needed bytes*/
+    long min;
+    long max;
+
+    switch(bytes){
+        case 1:
+            min = SCHAR_MIN;
+            max = SCHAR_MAX;
+            break;
+        case 2:
+            min = SHRT_MIN;
+            max = SHRT_MAX;
+            break;
+        case 4:
+            min = INT_MIN;
+            max = INT_MAX;
+            break;
+        default:
+            return FALSE;
+    }
+
+    return value >= min && value <= max;
+}
+
+/*From here helper functions*/
+
+/**
+ * Function to save structured instruction code.
+ * @param codeHead Head of code linked list.
+ * @param machineCode Structure machine code
+ * @param withLabel If it with label we need to know it.
+ * @param label Label declared in code.
+ * @param IC Instruction counter.
+ * @param lineNum Number of line where code was declared.
+ * @param isI If it immed instruction.
+ */
+static void saveInstructionCode(codeImageTable *codeHead,unsigned long machineCode,bool withLabel,char *label,long IC,long lineNum,bool isI){
     codeImageTable current = *codeHead;
     codeImageTable newLine = mallocWithCheck(sizeof(*newLine));
     newLine->hasLabel = withLabel;
@@ -359,33 +455,14 @@ void saveInstructionCode(codeImageTable *codeHead,unsigned long machineCode,bool
     current->next = newLine;
 }
 
-bool checkRange(long value, unsigned long bytes)
-{   /*fast checking if value can be stored in needed bytes*/
-    long min;
-    long max;
-
-    switch(bytes){
-        case 1:
-            min = SCHAR_MIN;
-            max = SCHAR_MAX;
-            break;
-        case 2:
-            min = SHRT_MIN;
-            max = SHRT_MAX;
-            break;
-        case 4:
-            min = INT_MIN;
-            max = INT_MAX;
-            break;
-        default:
-            return FALSE;
-    }
-
-    return value >= min && value <= max;
-}
-
-
-void saveNumber(unsigned char *dataImg,long value, directive dir, long *dc)
+/**
+ * Function that saving (.db, .dw, .dh) data numbers.
+ * @param dataImg Data array.
+ * @param value Value to save.
+ * @param dir Type of data (.db, .dw, .dh).
+ * @param dc Data counter.
+ */
+static void saveNumber(unsigned char *dataImg,long value, directive dir, long *dc)
 {
     /*need to be little endian page 23*/
     switch(dir)
@@ -412,9 +489,13 @@ void saveNumber(unsigned char *dataImg,long value, directive dir, long *dc)
     }
 }
 
-
-
-void saveByte(unsigned char *dataImg,unsigned long value, long *dc)
+/**
+ * Function that saving value per byte in data image.
+ * @param dataImg Data array.
+ * @param value Value to save.
+ * @param dc Data counter.
+ */
+static void saveByte(unsigned char *dataImg,unsigned long value, long *dc)
 {
     dataImg[(*dc)++] = value & 0xff;
 }

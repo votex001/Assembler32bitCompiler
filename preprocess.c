@@ -90,21 +90,26 @@ bool expandMacros(cur_line line,bool *skip_current_macro,bool *is_in_macro,char 
     const char *macroContent;
     i = j = 0;/*init*/
     
+    /*saving number of line*/
     saveLineNum(line);
 
+    /*skip white chars*/
     skipSpaces(line.code,&i);
 
+    /*skip empti string no errors or code*/
     if(isEmptyStr(line.code,i)){
         fputs(line.code,amFile);
         return TRUE;/*comment or empty string - skip*/
     }
 
-    
+    /*Check if we need to append macro in code*/
     if(!isNextWordLabel(line,savedWord,&i) && isMacroExist(savedWord)){
         macroContent = getMacro(savedWord);
         fputs(macroContent,amFile);
         return TRUE;
     }
+
+    /*if found mcro in command but text before*/
     if(strstr(line.code, "mcro") != NULL && strcmp(savedWord,"mcro") == 1){
         printf("%s.as:%ld: error: text before mcro declaration.\n",line.fileName,line.num);
         *skip_current_macro = TRUE;
@@ -113,12 +118,14 @@ bool expandMacros(cur_line line,bool *skip_current_macro,bool *is_in_macro,char 
 
     /*searching for mcro start line*/
     if(strcmp(savedWord,"mcro") == 0){
-        *is_in_macro = TRUE;
+        *is_in_macro = TRUE;/*from now we are copy macro code until we dont found mcroend*/
         
-      
-        getNextWord(line,savedWord,&i);
-        strcpy(macro_name, savedWord);
-        skipSpaces(line.code,&i);
+        
+        getNextWord(line,savedWord,&i);/*name of macro*/
+        strcpy(macro_name, savedWord);/*copy it to macro name to still know the name of it*/
+        skipSpaces(line.code,&i);/*white chars*/
+
+        /*page 32*/
         if(line.code[i] != '\n'){
             printf("%s.as:%ld: error: text after mcro declaration.\n",line.fileName,line.num);
             *skip_current_macro = TRUE;
@@ -139,6 +146,14 @@ bool expandMacros(cur_line line,bool *skip_current_macro,bool *is_in_macro,char 
         if(strcmp(savedWord,"mcroend")==0){
             *is_in_macro = FALSE;
             *skip_current_macro = FALSE;
+
+            /*page 32*/
+            skipSpaces(line.code,&i);
+            if(!isEmptyStr(line.code,i)){
+                printf("%s.as:%ld: error: text after mcro end.\n",line.fileName,line.num);
+                return FALSE;
+            }
+            
         }
             return TRUE;
     }
@@ -146,9 +161,16 @@ bool expandMacros(cur_line line,bool *skip_current_macro,bool *is_in_macro,char 
     /*copying macro line or exit macro cicle*/
     if(*is_in_macro){
         if(strcmp(savedWord,"mcroend")==0){
-            *is_in_macro = FALSE; 
-        }else{
+            *is_in_macro = FALSE;
             
+            /*page 32*/
+            skipSpaces(line.code,&i);
+            if(!isEmptyStr(line.code,i)){
+                printf("%s.as:%ld: error: text after mcro end.\n",line.fileName,line.num);
+                return FALSE;
+            }
+
+        }else{
             /*appendMacroLine in macro table by *macro_name*/
             appendMacroLine(macro_name,line.code);
         }

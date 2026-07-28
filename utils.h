@@ -16,7 +16,7 @@ void *reallocWithCheck(void *ptr,long size);
 bool isEmptyStr(char *str,int i);
 bool is_int(char *string);
 void getNextWord(cur_line line,char *nextWord,int *i);
-bool isCommaNext(cur_line line,int *i,char *firstWord,char *nexWord);
+bool isCommaNext(cur_line line,int *i,char *commandName,char *lastParam);
 bool isTextAfterCommand(cur_line line,int *i,char *commandName);
 
 

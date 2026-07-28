@@ -6,8 +6,12 @@
 #include "global.h"
 #include "utils.h"
 #include "code.h"
-/*TODO: description*/
 
+/**
+ * Allocates memory and check if it successful.
+ * @param size Size of memory ro allocate.
+ * @return Pointer to allocated memory. 
+ */
 void *mallocWithCheck(long size){
     void *ptr = malloc(size);
     if(ptr == NULL){
@@ -17,7 +21,12 @@ void *mallocWithCheck(long size){
     return ptr;
 }
 
-
+/**
+ * Reallocates memory and check if it successful.
+ * @param pointer to previous location of memory.
+ * @param size Size of memory ro reallocate.
+ * @return Pointer to reallocated memory. 
+ */
 void *reallocWithCheck(void *ptr,long size){
 
     void *new_ptr = realloc(ptr, size);
@@ -30,7 +39,12 @@ void *reallocWithCheck(void *ptr,long size){
     return new_ptr;
 }
 
-/*cuts from str1 str2*/
+/**
+ * Cuts from end of str1 - str2.
+ * @param str1 String to cut from.
+ * @param str2 String to cut.
+ * @return Result.
+ */
 char *cutStr(const char *str1,const char *str2){
     char *res;
     size_t strLen1 = strlen(str1);
@@ -46,7 +60,10 @@ char *cutStr(const char *str1,const char *str2){
     return res;
 }
 
-/*Checking if file if .as format*/
+/**
+ * Checking if file if .as format
+ * @param fileName Full name of file to check
+ */
 bool isCorrectFileName(char *fileName){
     int len = strlen(fileName);
     if(len < 3)
@@ -58,13 +75,23 @@ bool isCorrectFileName(char *fileName){
 
 }
 
-/*skips at line all spaces and tabs*/
+/**
+ * Skips at line all spaces and tabs
+ * @param str String line.
+ * @param i Counter after function will be at first non white char.
+ */
 void skipSpaces(char *str, int *i){
     while(str[*i] && (str[*i]=='\t' || str[*i] == ' ' || str[*i]=='\r'))
     (*i)++;
 }
 
-
+/**
+ * Check if word is label
+ * @param line Line information.
+ * @param nextWord Word output.
+ * @param i Counter will on first char after word.
+ * @return If word is label.
+ */
 bool isNextWordLabel(const cur_line line,char *nextWord,int *i){
     int j;
     j = 0;
@@ -89,7 +116,11 @@ bool isNextWordLabel(const cur_line line,char *nextWord,int *i){
 
 }
 
-
+/**
+ * Validate label
+ * @param label Label word.
+ * @return If it valid.
+ */
 bool isValidLabel(const char *label){
 
     /*page 35*/
@@ -97,19 +128,27 @@ bool isValidLabel(const char *label){
 
 }
 
-
-bool isAlphanumeric(const char *str){
+/**
+ * Checks if word is build from characters or numbers.
+ * @param str Word.
+ * @return If it Alphanumeric.
+ */
+bool isAlphanumeric(const char *word){
     int i;
 
-    for(i = 0; str[i];i++){
-        if(!isalpha(str[i]) && !isdigit(str[i]))
+    for(i = 0; word[i];i++){
+        if(!isalpha(word[i]) && !isdigit(word[i]))
             return FALSE;
     }
 
     return TRUE;
 }
 
-
+/**
+ * Checks if it register instruction or directive
+ * @param word Word to check.
+ * @return Is reserved word.
+ */
 bool isReservedWord(const char *word){
     funct func;
     opcode op;
@@ -125,7 +164,12 @@ bool isReservedWord(const char *word){
     return FALSE;
 }   
 
-
+/**
+ * Checks if in string white characters only.
+ * @param str string to check.
+ * @param i Start place to check from.
+ * @return if no found something else.
+ */
 bool isEmptyStr(char *str,int i){
     if(!str[i] || str[i] == '\n' || str[i] == ';' || str[i] == '\r'){
         return TRUE;
@@ -133,9 +177,14 @@ bool isEmptyStr(char *str,int i){
     return FALSE;
 }
 
-
+/**
+ * Check if string is number
+ * @param string String to check.
+ * @return If only numbers there.
+ */
 bool is_int(char *string) {
 	int i = 0;
+    /*page 35*/
 	if (string[0] == '-' || string[0] == '+') string++; 
 	for (; string[i]; i++) {
 		if (!isdigit(string[i])) {
@@ -146,7 +195,12 @@ bool is_int(char *string) {
 }
 
 
-
+/**
+ * Saving word after i from line.
+ * @param line Line info.
+ * @param nextWord Output word.
+ * @param i Counter when to start copy word from.
+ */
 void getNextWord(cur_line line,char *nextWord,int *i){
     int j;
     j = 0;
@@ -164,18 +218,33 @@ void getNextWord(cur_line line,char *nextWord,int *i){
 
     nextWord[j] = '\0';
 }
-bool isCommaNext(cur_line line,int *i,char *firstWord,char *nexWord){
+
+/**
+ * Checking next non white char if comma.
+ * @param line Line information.
+ * @param i Counter to start searching from it.
+ * @param commandName Command name.
+ * @param lastParam Parameter before expected comma.
+ * @return If found comma.
+ */
+bool isCommaNext(cur_line line,int *i,char *commandName,char *lastParam){
     skipSpaces(line.code,i);
     if(isEmptyStr(line.code,*i) || line.code[*i] != ','){
         printf("%s.as:%ld: error: miss parameters for ",line.fileName,line.num);
-        printf("command '%s', expected ',' after %s.\n",firstWord,nexWord);
+        printf("command '%s', expected ',' after %s.\n",commandName,lastParam);
         return FALSE;
     }    
     /*we got comma and skip it*/
     (*i)++;
     return TRUE;       
 }
-
+/**
+ * Checking if there some nonwhite characters after counter.
+ * @param line Line info.
+ * @param i Counter.
+ * @param commandName Name of command.
+ * @return If found nonwhite character.
+ */
 bool isTextAfterCommand(cur_line line,int *i,char* commandName){
     skipSpaces(line.code,i);
     if(!isEmptyStr(line.code,*i)){

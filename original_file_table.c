@@ -18,11 +18,15 @@ void saveLineNum(cur_line line){
     lineTable current;
     lineTable newLine;
 
+    /*create ne line*/
     newLine = mallocWithCheck(sizeof(*newLine));
     strcpy(newLine->line,line.code);
     newLine->num = line.num;
     newLine->next = NULL;
     current = lineTableHead;
+
+
+
     if(lineTableHead == NULL){
         lineTableHead = newLine;
         return;
@@ -36,6 +40,7 @@ void saveLineNum(cur_line line){
     current->next = newLine;
     
 }
+
 /**
  * Function to get correct line Number from .as file
  * @param line Text of line to search it.

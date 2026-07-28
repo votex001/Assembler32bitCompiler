@@ -15,7 +15,7 @@
 void compileFile(char *fileName);
 
 /**
- * Entry point - 32bit assembler.Assembly language specified in booklet 2026b.
+ * Entry point - 32bit assembler.Assembly language specified in maman 2026b.
  */
 int main(int argc, char *files[]){
     int i;

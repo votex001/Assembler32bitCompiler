@@ -54,7 +54,9 @@ void processFiles(char *fileName){
             isSuccess = FALSE;
          }
     }
+
     fclose(amFile);
+    /*Deleting output file from preprocess*/
     if(!isSuccess){
         deleteFile(line.fileName,".am");
     }
@@ -63,7 +65,7 @@ void processFiles(char *fileName){
     deleteMacroTable();
     free(line.fileName);
     free(dataImg);
-    freeSymbolTable();
+    freeLabelTable();
     freeExternTable();
     freeEntryTable(entryHead);
     freeCodeTable(codeHead);
