@@ -287,6 +287,7 @@ labelTable getLabel(char *name){
     labelTable current = labelHead;
 
     while (current != NULL) {
+        /*I know that this is unsave but if not like that its danger because of memory leak*/
         if (strcmp(current->label, name) == 0) {
             return current;
         }
