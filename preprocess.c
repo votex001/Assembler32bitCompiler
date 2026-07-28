@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "global.h"
 #include "utils.h"
 #include "file_utils.h"
@@ -31,11 +32,7 @@ bool preprocessFile(char *fileName){
     line.code = temp_str;
     line.fileName = cutStr(fileName,".as");
 
-    /*checking if correct extension*/
-    if(!isCorrectFileName(fileName)){
-        printf("Error: can't open file %s - incorrect format.Skipped.\n",fileName);
-        return FALSE;
-    }    
+    
     
     asFile = readFile(line.fileName,".as");
 
@@ -93,7 +90,7 @@ bool expandMacros(cur_line line,bool *skip_current_macro,bool *is_in_macro,char 
     const char *macroContent;
     i = j = 0;/*init*/
     
-    saveLineInfo(line);
+    saveLineNum(line);
 
     skipSpaces(line.code,&i);
 
@@ -127,9 +124,7 @@ bool expandMacros(cur_line line,bool *skip_current_macro,bool *is_in_macro,char 
             *skip_current_macro = TRUE;
             return FALSE;
         }
-        if(!isReservedWord(macro_name) && getMacro(macro_name) == NULL){
-
-            
+        if(!isReservedWord(macro_name) && !isMacroExist(macro_name)){
             appendMacroLine(macro_name,restOfLine);
         }else{
             printf("%s.as:%ld: error: mcro %s declareted already.\n",line.fileName,line.num,macro_name);

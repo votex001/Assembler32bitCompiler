@@ -2,6 +2,7 @@
 #define ORIGINAL_FILE_TABLE_H
 #include "global.h"
 
+
 typedef struct singleLineInfo
 {
     char line[MAX_LINE_LENGTH +2];
@@ -11,6 +12,8 @@ typedef struct singleLineInfo
 
 typedef singleLineInfo *lineTable;
 
-void saveLineInfo(cur_line line);
-long getLineNum(char *str);
+void saveLineNum(cur_line line);
+long getLineNum(char *lineTable);
+void deleteLineTable();
+
 #endif

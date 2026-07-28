@@ -16,7 +16,12 @@ macroTable head;
 
 
 
-
+/**
+ * Getting name of macro and adding command line to it.
+ * @param name Name of macro to add functions.
+ * @param content Lines of code.
+ * @return Macro structure.
+ */
 macro *createMacro(const char *name, const char *content)
 {
     macro *newMacro = mallocWithCheck(sizeof(*newMacro));
@@ -29,7 +34,11 @@ macro *createMacro(const char *name, const char *content)
     return newMacro;
 }
 
-
+/**
+ * Function to append macro lines.
+ * @param name Name of macro to add functions.
+ * @param content Lines of code.
+ */
 void appendMacroLine(const char *name,const char *content){
 
     macroTable current;
@@ -59,7 +68,12 @@ void appendMacroLine(const char *name,const char *content){
     }
 }
 
-const char *getMacro(const char *name){
+/**
+ * Function thats searching by name of macto lines of code.
+ * @param name Name of macro.
+ * @return Lines of code saved in Macro.
+ */
+char *getMacro(const char *name){
     macroTable cur = head;
 
     while(cur != NULL && strcmp(cur->name, name) != 0)
@@ -73,7 +87,11 @@ const char *getMacro(const char *name){
 }
 
 
-
+/**
+ * Boolean fuction that check if macro exist.
+ * @param name Name of macro.
+ * @return True if macro exist.
+ */
 bool isMacroExist(const char *name){
     macroTable cur = head;
     while (cur != NULL)
@@ -86,7 +104,9 @@ bool isMacroExist(const char *name){
     return FALSE;
 }
 
-
+/**
+ * Deletes table and all mallocs.
+ */
 void deleteMacroTable(){
     macroTable prev = head;
     macroTable cur;
