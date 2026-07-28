@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+
 #include "utils.h"
 #include "file_utils.h"
 #include "process_files.h"
@@ -53,16 +54,20 @@ void processFiles(char *fileName){
             isSuccess = FALSE;
          }
     }
-    deleteMacroTable();
     fclose(amFile);
     if(!isSuccess){
         deleteFile(line.fileName,".am");
     }
+    
+    /*all mallocs*/
+    deleteMacroTable();
     free(line.fileName);
     free(dataImg);
     freeSymbolTable();
     freeExternTable();
     freeEntryTable(entryHead);
     freeCodeTable(codeHead);
+    deleteLineTable();
+    
 
 }

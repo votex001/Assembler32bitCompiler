@@ -15,7 +15,7 @@ typedef macro *macroTable;
 void appendMacroLine(const char *name,const char *content);
 bool isMacroExist(const char *name);
 void deleteMacroTable();
-const char *getMacro(const char *name);
+char *getMacro(const char *name);
 
 
 #endif

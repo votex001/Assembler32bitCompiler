@@ -1,16 +1,17 @@
-#include "global.h"
 #include <string.h>
 #include <ctype.h>
 
+#include "global.h"
 
-
-struct cmdInstructionEl {
+/** Structure for instruction format*/
+typedef struct  cmdInstructionEl{
     char *name;
     funct fun;
     opcode op;
-};
+}cmdInstructionEl;
 
-struct cmdInstructionEl instTable[] = {
+/* Table of instructions.*/
+cmdInstructionEl instTable[] = {
     {"add",  ADD_FUNCT,  ADD_OP},
     {"sub",  SUB_FUNCT,  SUB_OP},
     {"and",  AND_FUNCT,  AND_OP},
@@ -44,13 +45,16 @@ struct cmdInstructionEl instTable[] = {
     {NULL, NONE_FUNCT, NONE_OP}
 };
 
-struct cmdDirectiveEl {
+/* Structure for directive format*/
+typedef struct cmdDirectiveEl{
     char *name;
     directive dir;
     int size;
-};
+}cmdDirectiveEl;
 
-struct cmdDirectiveEl dirTable[] = {
+
+/* Table of directives.*/
+cmdDirectiveEl dirTable[] = {
     {".db",DB_DIR,1},/*per number*/
     {".dh",DH_DIR,2},/*per number*/
     {".dw",DW_DIR,4},/*per number*/
@@ -60,9 +64,14 @@ struct cmdDirectiveEl dirTable[] = {
     {NULL,NONE_DIR,0}
 };
 
-
+/**
+ * Checking if current word is one of instruction.
+ * @param name Name of instruction.
+ * @param func_out Returning func of current instruction.
+ * @param op_out Returning opcode of current instruction
+ */
 void getFuncOp(char *name, funct *func_out, opcode *op_out){
-    struct cmdInstructionEl *el;
+    cmdInstructionEl *el;
     *op_out = NONE_OP;
     *func_out = NONE_FUNCT;
     /*iterate instruction table until it NONE and if we found compare by name we stop*/
@@ -77,6 +86,11 @@ void getFuncOp(char *name, funct *func_out, opcode *op_out){
 
 }
 
+
+/**
+ * Function is getting $0-31 and return number of register.
+ * @return Number of register $0-31 or -1 if not register.
+ */
 int getRegisterNum(const char *reg)
 {
     int num = 0;
@@ -100,9 +114,14 @@ int getRegisterNum(const char *reg)
     return -1;
 }
 
-
+/**
+ * Checking if word is one of directive.
+ * @param name Directive name.
+ * @param dir_out Directive.
+ * @param size_out Size per simbol to save.
+ */
 void getDirectiveByName(const char *name,directive *dir_out,int *size_out){
-    struct cmdDirectiveEl *el;
+    cmdDirectiveEl *el;
 
     *dir_out = NONE_DIR;
     *size_out = 0;
